@@ -10,6 +10,12 @@
         <name>Qyuan</name>
     <description>Qyuan</description>
 
+    <modules>
+        <module>qyuan-common</module>
+        <module>qyuan-user</module>
+        <module>qyuan-read-notes</module>
+    </modules>
+
     <properties>
         <java.version>17</java.version>
 
