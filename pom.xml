@@ -10,6 +10,10 @@
         <name>Qyuan</name>
     <description>Qyuan</description>
 
+    <modules>
+        <module>qyuan-order</module>
+        <module>qyuan-user</module>
+    </modules>
     <properties>
         <java.version>17</java.version>
 
@@ -170,11 +174,7 @@
         </dependency>
     </dependencies>
 
-    <modules>
-        <module>qyuan-common</module>
-        <module>qyuan-user</module>
-        <module>qyuan-paper-RD</module>
-    </modules>
+
 
     <build>
         <plugins>
