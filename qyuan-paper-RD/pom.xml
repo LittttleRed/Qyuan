@@ -12,12 +12,9 @@
     <name>qyuan-paper-RD</name>
     <description>qyuan-paper-RD</description>
 
-    <!-- <properties> -->
-    <!--     <java.version>17</java.version> -->
-    <!--     <maven.compiler.source>17</maven.compiler.source> -->
-    <!--     <maven.compiler.target>17</maven.compiler.target> -->
-    <!--     <maven.compiler.release>17</maven.compiler.release> -->
-    <!-- </properties> -->
+    <properties>
+        <java.version>17</java.version>
+    </properties>
     <dependencies>
         <!-- 基础依赖 -->
         <dependency>
