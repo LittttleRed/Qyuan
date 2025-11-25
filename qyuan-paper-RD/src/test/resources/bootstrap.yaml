@@ -1,0 +1,12 @@
+spring:
+  profiles:
+    active: test
+  application:
+    name: qyuan-paper-RD
+  # 禁用nacos在测试中
+  cloud:
+    nacos:
+      discovery:
+        enabled: false
+      config:
+        enabled: false

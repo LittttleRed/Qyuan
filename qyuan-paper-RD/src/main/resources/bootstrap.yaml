@@ -4,6 +4,16 @@ spring:
 server:
   port: 9000
 
+# 华为云 OBS 配置
+huawei:
+  obs:
+    enabled: true
+    endpoint: ${HUAWEICLOUD_SDK_ENDPOINT}
+    accessKey: ${HUAWEICLOUD_SDK_AK}
+    secretAccessKey: ${HUAWEICLOUD_SDK_SK}
+    bucketName: ${HUAWEICLOUD_SDK_BUCKET_NAME}
+    expiration: 60
+
 ---
 # development environment
 spring:

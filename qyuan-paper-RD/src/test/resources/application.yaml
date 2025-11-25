@@ -1,0 +1,24 @@
+spring:
+  profiles:
+    active: test
+  main:
+    allow-bean-definition-overriding: true
+  cloud:
+    nacos:
+      discovery:
+        enabled: false
+      config:
+        enabled: false
+
+server:
+  port: 9000
+
+# 华为云 OBS 配置
+huawei:
+  obs:
+    enabled: true
+    endpoint: obs.cn-north-4.myhuaweicloud.com
+    accessKey: HPUAE1MAHBIWWPY6YXFT
+    secretAccessKey: 3vxHO43y0ZRHWogP73gtqZ2H5fQKatB0KPmEwcBZ
+    bucketName: bucket-pdf-74a6
+    expiration: 60

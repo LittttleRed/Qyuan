@@ -29,3 +29,13 @@ spring:
         timeout: 10000
         username: nacos
         password: QianYuanWanMa_18
+
+# 华为云 OBS 配置
+huawei:
+  obs:
+    endpoint: ${HUAWEI_CLOUD_OBS_ENDPOINT}
+    accessKey: ${HUAWEI_CLOUD_OBS_AK}
+    secretAccessKey: ${HUAWEI_CLOUD_OBS_SK}
+    bucketName: ${HUAWEI_CLOUD_OBS_BUCKET_NAME}
+    expiration: 60
+
