@@ -13,6 +13,7 @@
     <modules>
         <module>qyuan-order</module>
         <module>qyuan-user</module>
+        <module>qyuan-gateway</module>
     </modules>
     <properties>
         <java.version>17</java.version>

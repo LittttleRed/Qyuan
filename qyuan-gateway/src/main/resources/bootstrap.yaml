@@ -12,7 +12,7 @@ spring:
       on-profile: dev
     import: file:.env.dev.properties
   application:
-    name: qyuan-order
+    name: qyuan-gateway
   cloud:
     nacos:
       discovery:
