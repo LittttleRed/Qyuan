@@ -16,6 +16,7 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @TableName("`order`")
 public class Order {
+
     @TableId(type = IdType.AUTO)
     private Integer orderId;
 
