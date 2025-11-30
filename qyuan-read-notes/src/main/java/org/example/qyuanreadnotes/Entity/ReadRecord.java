@@ -17,8 +17,9 @@ import java.time.LocalDateTime;
 @Data
 @TableName("read_record")
 public class ReadRecord {
+
     @TableId(type = IdType.AUTO)
-    public int id;
+    public int recordId;
 
     @TableField("user_id")
     public int userId;

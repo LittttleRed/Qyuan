@@ -19,9 +19,13 @@ spring:
         server-addr: ${NACOS_IP}:${NACOS_PORT}
         namespace: ${NACOS_NAMESPACE}
         group: Qyuan
+        username: nacos
+        password: QianYuanWanMa_18
       config:
         server-addr: ${NACOS_IP}:${NACOS_PORT}
         namespace: ${NACOS_NAMESPACE}
         file-extension: yaml
         group: Qyuan
         timeout: 10000
+        username: nacos
+        password: QianYuanWanMa_18
