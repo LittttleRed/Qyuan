@@ -1,0 +1,31 @@
+spring:
+  profiles:
+    active: dev
+server:
+  port: 9000
+
+---
+# development environment
+spring:
+  config:
+    activate:
+      on-profile: dev
+    import: file:.env.dev.properties
+  application:
+    name: qyuan-gateway
+  cloud:
+    nacos:
+      discovery:
+        server-addr: ${NACOS_IP}:${NACOS_PORT}
+        namespace: ${NACOS_NAMESPACE}
+        group: Qyuan
+        username: nacos
+        password: QianYuanWanMa_18
+      config:
+        server-addr: ${NACOS_IP}:${NACOS_PORT}
+        namespace: ${NACOS_NAMESPACE}
+        file-extension: yaml
+        group: Qyuan
+        timeout: 10000
+        username: nacos
+        password: QianYuanWanMa_18
