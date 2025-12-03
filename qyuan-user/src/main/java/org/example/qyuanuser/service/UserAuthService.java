@@ -5,5 +5,6 @@ package org.example.qyuanuser.service;
  * @author: 29177
  * @time: 2025/11/12 18:03
  */
-public interface UserService {
+public interface UserAuthService {
+    
 }
