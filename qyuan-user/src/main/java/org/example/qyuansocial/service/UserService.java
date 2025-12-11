@@ -1,4 +1,4 @@
-package org.example.qyuanuser.service;
+package org.example.qyuansocial.service;
 
 /**
  * @description:

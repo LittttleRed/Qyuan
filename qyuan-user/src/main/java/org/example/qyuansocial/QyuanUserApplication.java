@@ -1,4 +1,4 @@
-package org.example.qyuanuser;
+package org.example.qyuansocial;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
