@@ -1,0 +1,22 @@
+services:
+  qyuan-paper-rd:
+    build: .
+    container_name: qyuan-paper-rd
+    ports:
+      - "8080:8080"
+    environment:
+      # 可以在这里设置环境变量，例如连接外部MySQL和Nacos
+      # SPRING_DATASOURCE_URL: jdbc:mysql://external-mysql:3306/dbname
+      # SPRING_CLOUD_NACOS_DISCOVERY_SERVER-ADDR: external-nacos:8848
+      # 暂时留空，由外部配置文件提供
+      JAVA_OPTS: "-Xmx512m -Xms256m"
+    # 如果需要连接到外部服务，可以定义外部网络
+    networks:
+      - default
+    restart: unless-stopped
+
+# 可以定义外部网络，如果需要连接其他容器
+networks:
+  default:
+    driver: bridge
+

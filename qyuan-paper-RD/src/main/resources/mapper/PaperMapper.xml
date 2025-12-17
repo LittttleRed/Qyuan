@@ -116,6 +116,20 @@
         LIMIT #{limit}
     </select>
 
+    <!-- 获取热门论文（别名，为了兼容测试） -->
+    <select id="getPopularPapers" resultMap="BaseResultMap">
+        SELECT * FROM paper
+        ORDER BY updated DESC
+        LIMIT #{limit}
+    </select>
+
+    <!-- 获取最新论文（别名，为了兼容测试） -->
+    <select id="getLatestPapers" resultMap="BaseResultMap">
+        SELECT * FROM paper
+        ORDER BY updated DESC
+        LIMIT #{limit}
+    </select>
+
     <!-- 根据分类ID获取论文 -->
     <select id="selectByCategoryId" resultMap="BaseResultMap">
         SELECT * FROM paper
