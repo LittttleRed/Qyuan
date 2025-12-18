@@ -1,10 +1,12 @@
 package org.example.qyuanuser.service;
 
-/**
- * @description:
- * @author: 29177
- * @time: 2025/11/12 18:03
- */
+import org.example.qyuanuser.DTO.auth.*;
+import org.example.qyuanuser.Result.*;
+
 public interface UserAuthService {
+    RegisterResult register(RegisterDTO registerDTO);
+    LoginResult captchaLogin(CaptchaLoginDTO captchaLoginDTO);
+    LoginResult passwordLogin(PasswordLoginDTO passwordLoginDTO);
+    boolean sendCaptcha(SendCaptchaDTO sendCaptchaDTO);
     
 }
