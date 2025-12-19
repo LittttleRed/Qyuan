@@ -141,6 +141,14 @@
             <scope>test</scope>
         </dependency>
 
+        <!-- MyBatis Test -->
+        <dependency>
+            <groupId>org.mybatis.spring.boot</groupId>
+            <artifactId>mybatis-spring-boot-starter-test</artifactId>
+            <version>3.0.3</version>
+            <scope>test</scope>
+        </dependency>
+
         <!-- 测试数据库 -->
         <dependency>
             <groupId>com.h2database</groupId>
