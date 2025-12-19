@@ -26,6 +26,11 @@ public class HighLightsServiceImpl extends ServiceImpl<HighLightsMapper, HighLig
     }
 
     @Override
+    public void deleteHighlight(Integer highlightId) {
+         this.removeById(highlightId);
+    }
+
+    @Override
     public HighLights createHighlight(int userId, Integer paperId, int pageIndex, String highlightedText, String positionData, String color, BigDecimal opacity) {
              HighLights highLights=new HighLights();
              highLights.setUserId(userId);

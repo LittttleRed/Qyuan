@@ -16,7 +16,7 @@ import org.springframework.web.bind.annotation.*;
 public class NoteController {
     @Resource
     NoteService noteService;
-    @RequestMapping("/{paper_id}")
+    @GetMapping("/{paper_id}")
     public Result<Object> getNote(@RequestHeader("USER-ID") int user_id,
                                   @PathVariable("paper_id") Integer paper_id){
         try {
@@ -25,7 +25,7 @@ public class NoteController {
             return Result.fail(e.getMessage());
         }
     }
-    @RequestMapping("/addNotes")
+    @PostMapping("/addNotes")
     public Result<Object> addNotes(@RequestHeader("USER-ID") int user_id,
                                    @RequestBody JSONObject body){
         try{
@@ -35,7 +35,7 @@ public class NoteController {
             return Result.fail(e.getMessage());
         }
     }
-    @RequestMapping("/updateNotes")
+    @PostMapping("/updateNotes")
     public Result<Object> updateNotes(@RequestBody JSONObject body){
         try{
             Integer noteId= body.getInteger("id");
@@ -46,7 +46,7 @@ public class NoteController {
             return Result.fail(e.getMessage());
         }
     }
-     @RequestMapping("/deleteNotes")
+     @PostMapping("/deleteNotes")
     public Result<Object> deleteNotes(@RequestBody JSONObject body){
         try{
             Integer noteId= body.getInteger("id");

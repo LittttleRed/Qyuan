@@ -18,7 +18,7 @@ import java.math.BigDecimal;
 public class HighLightsController {
     @Resource
     HighLightsService highLightsService;
-    @RequestMapping("/{paper_id}")
+    @GetMapping("/{paper_id}")
     public Result<Object> getHighLights(@RequestHeader("USER-ID") int user_id,
                                         @PathVariable("paper_id") Integer paper_id){
         try{
@@ -27,7 +27,7 @@ public class HighLightsController {
             return Result.fail(e.getMessage());
         }
     }
-    @RequestMapping("/createHighlight")
+    @PostMapping("/createHighlight")
     public Result<Object> createHighlight(@RequestHeader("USER-ID") int user_id,
                                           @RequestBody JSONObject body){
         try{
@@ -42,4 +42,14 @@ public class HighLightsController {
             return Result.fail(e.getMessage());
         }
     }
+    @PostMapping("/deleteHighlight/{highlight_id}")
+    public Result<Object> deleteHighlight(@PathVariable("highlight_id") Integer highlight_id){
+        try{
+            highLightsService.deleteHighlight(highlight_id);
+            return Result.ok();
+        }catch (Exception e){
+            return Result.fail(e.getMessage());
+        }
+    }
+
 }

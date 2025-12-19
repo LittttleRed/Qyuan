@@ -11,8 +11,10 @@
     <description>Qyuan</description>
 
     <modules>
-        <module>qyuan-common</module>
+        <module>qyuan-order</module>
         <module>qyuan-user</module>
+        <module>qyuan-gateway</module>
+        <module>qyuan-common</module>
         <module>qyuan-read-notes</module>
     </modules>
 

@@ -6,4 +6,6 @@ public interface HighLightsService {
     Object getHighLights(int userId, Integer paperId);
 
     Object createHighlight(int userId, Integer paperId, int pageIndex, String highlightedText, String positionData, String color, BigDecimal opacity);
+
+    void deleteHighlight(Integer highlightId);
 }
