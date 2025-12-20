@@ -73,7 +73,7 @@ class PaperControllerTest {
     void searchPapers_Success() throws Exception {
         when(paperService.searchPapers(any(PaperSearchRequest.class))).thenReturn(mockPageResult);
 
-        mockMvc.perform(get("/api/v1/papers/search")
+        mockMvc.perform(get("/paper/papers/search")
                 .param("query", "test")
                 .param("page", "1")
                 .param("size", "20"))
@@ -89,7 +89,7 @@ class PaperControllerTest {
     void getPaperById_Success() throws Exception {
         when(paperService.getPaperById(1L)).thenReturn(mockPaper);
 
-        mockMvc.perform(get("/api/v1/papers/{paperId}", 1L))
+        mockMvc.perform(get("/paper/papers/{paperId}", 1L))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.code").value(200))
                 .andExpect(jsonPath("$.data.title").value("Test Paper"))
@@ -101,7 +101,7 @@ class PaperControllerTest {
     void getPaperById_NotFound() throws Exception {
         when(paperService.getPaperById(999L)).thenReturn(null);
 
-        mockMvc.perform(get("/api/v1/papers/{paperId}", 999L))
+        mockMvc.perform(get("/paper/papers/{paperId}", 999L))
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.code").value(404))
                 .andExpect(jsonPath("$.message").value("论文不存在"));
@@ -118,7 +118,7 @@ class PaperControllerTest {
 
         when(paperService.searchPapers(any(PaperSearchRequest.class))).thenReturn(mockPageResult);
 
-        mockMvc.perform(get("/api/v1/papers/search")
+        mockMvc.perform(get("/paper/papers/search")
                 .param("category_id", "1")
                 .param("page", "1")
                 .param("size", "20"))
@@ -134,7 +134,7 @@ class PaperControllerTest {
     void downloadPaper_Success() throws Exception {
         when(paperService.downloadPaperPdf(1L)).thenReturn("http://example.com/download/paper.pdf");
 
-        mockMvc.perform(get("/api/v1/papers/{paperId}/download", 1L))
+        mockMvc.perform(get("/paper/papers/{paperId}/download", 1L))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.code").value(200))
                 .andExpect(jsonPath("$.data.download_url").value("http://example.com/download/paper.pdf"));
@@ -145,7 +145,7 @@ class PaperControllerTest {
     void downloadPaper_NotFound() throws Exception {
         when(paperService.downloadPaperPdf(999L)).thenThrow(new RuntimeException("论文不存在"));
 
-        mockMvc.perform(get("/api/v1/papers/{paperId}/download", 999L))
+        mockMvc.perform(get("/paper/papers/{paperId}/download", 999L))
                 .andExpect(status().isInternalServerError())
                 .andExpect(jsonPath("$.code").value(500))
                 .andExpect(jsonPath("$.message").value("下载失败：论文不存在"));
@@ -156,7 +156,7 @@ class PaperControllerTest {
     void getPaperAuthors_Success() throws Exception {
         when(paperService.getPaperById(1L)).thenReturn(mockPaper);
 
-        mockMvc.perform(get("/api/v1/papers/{paperId}/authors", 1L))
+        mockMvc.perform(get("/paper/papers/{paperId}/authors", 1L))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.code").value(200));
     }
@@ -166,7 +166,7 @@ class PaperControllerTest {
     void getPaperAuthors_NotFound() throws Exception {
         when(paperService.getPaperById(999L)).thenReturn(null);
 
-        mockMvc.perform(get("/api/v1/papers/{paperId}/authors", 999L))
+        mockMvc.perform(get("/paper/papers/{paperId}/authors", 999L))
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.code").value(404))
                 .andExpect(jsonPath("$.message").value("论文不存在"));
@@ -181,7 +181,7 @@ class PaperControllerTest {
 
         when(paperService.exportPapers(any(PaperExportRequest.class))).thenReturn("http://example.com/export.bib");
 
-        mockMvc.perform(post("/api/v1/papers/export")
+        mockMvc.perform(post("/paper/papers/export")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isOk())
@@ -196,7 +196,7 @@ class PaperControllerTest {
         List<CitationDTO> citations = Arrays.asList();
         when(paperService.getPaperCitations(1L)).thenReturn(citations);
 
-        mockMvc.perform(get("/api/v1/papers/{paperId}/references", 1L)
+        mockMvc.perform(get("/paper/papers/{paperId}/references", 1L)
                 .param("direction", "citations"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.code").value(200));
@@ -208,7 +208,7 @@ class PaperControllerTest {
         List<CitationDTO> citations = Arrays.asList();
         when(paperService.getPapersCitedBy(1L)).thenReturn(citations);
 
-        mockMvc.perform(get("/api/v1/papers/{paperId}/references", 1L)
+        mockMvc.perform(get("/paper/papers/{paperId}/references", 1L)
                 .param("direction", "cited-by"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.code").value(200));

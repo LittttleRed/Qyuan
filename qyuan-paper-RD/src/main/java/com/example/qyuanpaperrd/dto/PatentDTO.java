@@ -56,14 +56,4 @@ public class PatentDTO {
      * 专利被引数
      */
     private Integer citationCount;
-
-    /**
-     * 是否已被当前用户认领
-     */
-    private Boolean isClaimed;
-
-    /**
-     * 认领状态
-     */
-    private String claimStatus;
 }

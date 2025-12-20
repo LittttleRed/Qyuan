@@ -44,22 +44,4 @@ public interface PatentService {
      * @return 专利列表
      */
     List<PatentDTO> getLatestPatents(Integer limit);
-
-    /**
-     * 认领专利
-     * @param patentNumber 专利申请号
-     * @param userId 用户ID
-     * @param proofUrl 认领证明URL
-     * @return 是否成功
-     */
-    boolean claimPatent(String patentNumber, Long userId, String proofUrl);
-
-    /**
-     * 获取用户认领的专利列表
-     * @param userId 用户ID
-     * @param pageNum 页码
-     * @param pageSize 页大小
-     * @return 分页结果
-     */
-    PageResult<PatentDTO> getUserClaimedPatents(Long userId, Integer pageNum, Integer pageSize);
 }

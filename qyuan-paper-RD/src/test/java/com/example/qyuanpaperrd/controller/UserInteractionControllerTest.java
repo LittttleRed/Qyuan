@@ -86,7 +86,8 @@ class UserInteractionControllerTest {
     void favoritePaper_Success() throws Exception {
         doNothing().when(userInteractionService).favoritePaper(anyLong(), anyLong());
 
-        mockMvc.perform(post("/api/v1/user/{userId}/favorites/{paperId}", 1L, 1L))
+        mockMvc.perform(post("/paper/user/favorites/{paperId}", 1L)
+                .header("USER-ID", "1"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.code").value(200))
                 .andExpect(jsonPath("$.message").value("收藏成功"))
@@ -99,7 +100,8 @@ class UserInteractionControllerTest {
     void unfavoritePaper_Success() throws Exception {
         doNothing().when(userInteractionService).unfavoritePaper(anyLong(), anyLong());
 
-        mockMvc.perform(delete("/api/v1/user/{userId}/favorites/{paperId}", 1L, 1L))
+        mockMvc.perform(delete("/paper/user/favorites/{paperId}", 1L)
+                .header("USER-ID", "1"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.code").value(200))
                 .andExpect(jsonPath("$.message").value("取消收藏成功"))
@@ -112,7 +114,7 @@ class UserInteractionControllerTest {
     void getUserFavorites_Success() throws Exception {
         when(userInteractionService.getUserFavorites(anyLong(), anyInt(), anyInt())).thenReturn(mockPageResult);
 
-        mockMvc.perform(get("/api/v1/user/{userId}/favorites", 1L)
+        mockMvc.perform(get("/paper/user/{userId}/favorites", 1L)
                 .param("page", "1")
                 .param("size", "20"))
                 .andExpect(status().isOk())
@@ -127,7 +129,8 @@ class UserInteractionControllerTest {
     void claimPaper_Success() throws Exception {
         doNothing().when(userInteractionService).claimPaper(anyLong(), any(ClaimRequest.class));
 
-        mockMvc.perform(post("/api/v1/user/{userId}/claims", 1L)
+        mockMvc.perform(post("/paper/user/claims")
+                .header("USER-ID", "1")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(mockClaimRequest)))
                 .andExpect(status().isOk())
@@ -149,7 +152,7 @@ class UserInteractionControllerTest {
         
         when(userInteractionService.getUserClaims(anyLong(), anyInt(), anyInt(), anyInt())).thenReturn(claimResult);
 
-        mockMvc.perform(get("/api/v1/user/{userId}/claims", 1L)
+        mockMvc.perform(get("/paper/user/{userId}/claims", 1L)
                 .param("status", "1")
                 .param("page", "1")
                 .param("size", "20"))
@@ -164,7 +167,7 @@ class UserInteractionControllerTest {
     void getUserHistory_Success() throws Exception {
         when(userInteractionService.getUserHistory(anyLong(), anyInt(), anyInt())).thenReturn(mockPageResult);
 
-        mockMvc.perform(get("/api/v1/user/{userId}/history", 1L)
+        mockMvc.perform(get("/paper/user/{userId}/history", 1L)
                 .param("page", "1")
                 .param("size", "20"))
                 .andExpect(status().isOk())
@@ -179,7 +182,8 @@ class UserInteractionControllerTest {
     void recordView_Success() throws Exception {
         doNothing().when(userInteractionService).recordView(anyLong(), anyLong());
 
-        mockMvc.perform(post("/api/v1/user/{userId}/record-view/{paperId}", 1L, 1L))
+        mockMvc.perform(post("/paper/user/record-view/{paperId}", 1L)
+                .header("USER-ID", "1"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.code").value(200))
                 .andExpect(jsonPath("$.message").value("浏览记录已保存"))
@@ -198,7 +202,7 @@ class UserInteractionControllerTest {
         
         when(userInteractionService.getUserProfile(anyLong())).thenReturn(profile);
 
-        mockMvc.perform(get("/api/v1/user/{userId}/profile", 1L))
+        mockMvc.perform(get("/paper/user/{userId}/profile", 1L))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.code").value(200))
                 .andExpect(jsonPath("$.data.userId").value(1))

@@ -69,7 +69,7 @@ class ContentControllerTest {
         List<PaperDTO> popularPapers = Arrays.asList(mockPaper);
         when(paperService.getPopularPapers(10)).thenReturn(popularPapers);
 
-        mockMvc.perform(get("/api/v1/contents/popular")
+        mockMvc.perform(get("/paper/contents/popular")
                 .param("type", "paper")
                 .param("limit", "10"))
                 .andExpect(status().isOk())
@@ -83,7 +83,7 @@ class ContentControllerTest {
         List<PatentDTO> hotPatents = Arrays.asList(mockPatent);
         when(patentService.getHotPatents(10)).thenReturn(hotPatents);
 
-        mockMvc.perform(get("/api/v1/contents/popular")
+        mockMvc.perform(get("/paper/contents/popular")
                 .param("type", "patent")
                 .param("limit", "10"))
                 .andExpect(status().isOk())
@@ -97,7 +97,7 @@ class ContentControllerTest {
         List<PaperDTO> latestPapers = Arrays.asList(mockPaper);
         when(paperService.getLatestPapers(10)).thenReturn(latestPapers);
 
-        mockMvc.perform(get("/api/v1/contents/latest")
+        mockMvc.perform(get("/paper/contents/latest")
                 .param("type", "paper")
                 .param("limit", "10"))
                 .andExpect(status().isOk())
@@ -111,7 +111,7 @@ class ContentControllerTest {
         List<PatentDTO> latestPatents = Arrays.asList(mockPatent);
         when(patentService.getLatestPatents(10)).thenReturn(latestPatents);
 
-        mockMvc.perform(get("/api/v1/contents/latest")
+        mockMvc.perform(get("/paper/contents/latest")
                 .param("type", "patent")
                 .param("limit", "10"))
                 .andExpect(status().isOk())

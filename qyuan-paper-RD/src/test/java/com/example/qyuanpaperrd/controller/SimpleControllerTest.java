@@ -52,7 +52,7 @@ class SimpleControllerTest {
         
         when(paperService.searchPapers(any(PaperSearchRequest.class))).thenReturn(mockResult);
 
-        mockMvc.perform(get("/api/v1/papers/search")
+        mockMvc.perform(get("/paper/papers/search")
                 .param("query", "test")
                 .param("page", "1")
                 .param("size", "20"))
@@ -73,7 +73,7 @@ class SimpleControllerTest {
         
         when(paperService.getPaperById(1L)).thenReturn(mockPaper);
 
-        mockMvc.perform(get("/api/v1/papers/{paperId}", 1L))
+        mockMvc.perform(get("/paper/papers/{paperId}", 1L))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.code").value(200))
                 .andExpect(jsonPath("$.data.title").value("Test Paper Details"))
@@ -85,7 +85,7 @@ class SimpleControllerTest {
     void testGetPaperByIdNotFound() throws Exception {
         when(paperService.getPaperById(999L)).thenReturn(null);
 
-        mockMvc.perform(get("/api/v1/papers/{paperId}", 999L))
+        mockMvc.perform(get("/paper/papers/{paperId}", 999L))
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.code").value(404))
                 .andExpect(jsonPath("$.message").value("论文不存在"));
@@ -107,7 +107,7 @@ class SimpleControllerTest {
 
         when(paperService.searchPapers(any())).thenReturn(mockResult);
 
-        mockMvc.perform(get("/api/v1/papers/search")
+        mockMvc.perform(get("/paper/papers/search")
                 .param("category_id", "1")
                 .param("page", "1")
                 .param("size", "20"))

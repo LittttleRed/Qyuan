@@ -58,7 +58,7 @@ class FileControllerTest {
         when(obsService.getPresignedUrl(anyString()))
             .thenReturn("http://example.com/presigned-url");
 
-        mockMvc.perform(multipart("/api/files/upload")
+        mockMvc.perform(multipart("/paper/files/upload")
                 .file(mockFile)
                 .param("folder", "papers"))
                 .andExpect(status().isOk())
@@ -74,7 +74,7 @@ class FileControllerTest {
         when(obsService.getPresignedUrl("test-file.pdf"))
             .thenReturn("http://example.com/presigned-url");
 
-        mockMvc.perform(get("/api/files/url/{objectKey}", "test-file.pdf"))
+        mockMvc.perform(get("/paper/files/url/{objectKey}", "test-file.pdf"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.objectKey").value("test-file.pdf"))
                 .andExpect(jsonPath("$.url").value("http://example.com/presigned-url"));
@@ -84,7 +84,7 @@ class FileControllerTest {
     @WithMockUser
     @DisplayName("删除文件 - 成功")
     void deleteFile_Success() throws Exception {
-        mockMvc.perform(delete("/api/files/{objectKey}", "test-file.pdf"))
+        mockMvc.perform(delete("/paper/files/{objectKey}", "test-file.pdf"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.message").value("文件删除成功"))
                 .andExpect(jsonPath("$.objectKey").value("test-file.pdf"));
@@ -96,7 +96,7 @@ class FileControllerTest {
     void checkFileExists_Exists() throws Exception {
         when(obsService.doesObjectExist("test-file.pdf")).thenReturn(true);
 
-        mockMvc.perform(get("/api/files/exists/{objectKey}", "test-file.pdf"))
+        mockMvc.perform(get("/paper/files/exists/{objectKey}", "test-file.pdf"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.objectKey").value("test-file.pdf"))
                 .andExpect(jsonPath("$.exists").value(true));
@@ -108,7 +108,7 @@ class FileControllerTest {
     void checkFileExists_NotExists() throws Exception {
         when(obsService.doesObjectExist("test-file.pdf")).thenReturn(false);
 
-        mockMvc.perform(get("/api/files/exists/{objectKey}", "test-file.pdf"))
+        mockMvc.perform(get("/paper/files/exists/{objectKey}", "test-file.pdf"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.objectKey").value("test-file.pdf"))
                 .andExpect(jsonPath("$.exists").value(false));
