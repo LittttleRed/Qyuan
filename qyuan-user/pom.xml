@@ -103,6 +103,12 @@
             <artifactId>minio</artifactId>
         </dependency>
 
+        <!-- Spring Security -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-security</artifactId>
+        </dependency>
+
         <!-- 配置处理器 -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
@@ -131,12 +137,6 @@
                 <directory>src/main/resources</directory>
                 <includes>
                     <include>*.*</include>
-                </includes>
-            </resource>
-            <resource>
-                <directory>../../</directory>
-                <includes>
-                    <include>.env.*</include>
                 </includes>
             </resource>
         </resources>
