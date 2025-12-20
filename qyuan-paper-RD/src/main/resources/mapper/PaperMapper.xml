@@ -37,11 +37,17 @@
             <if
         test="request.journalName != null and request.journalName != ''"> AND p.journal_source LIKE
     CONCAT('%', #{request.journalName}, '%') </if>
-            <if test="request.yearStart != null"> AND
-    YEAR(p.updated) >= #{request.yearStart} </if>
-            <if test="request.yearEnd != null"> AND
-    YEAR(p.updated) <= #{request.yearEnd}
-      </if>
+            <if test="request.yearStart != null">
+    <![CDATA[
+      AND YEAR(p.updated) >= #{request.yearStart}
+    ]]>
+</if>
+            <if
+        test="request.yearEnd != null">
+              <![CDATA[
+                AND YEAR(p.updated) <= #{request.yearEnd}
+              ]]>
+</if>
     </where>
         <choose>
       <when test="request.sortBy == 'title'"> ORDER BY p.title ${request.sortOrder == 'asc' ? 'ASC'
