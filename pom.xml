@@ -4,11 +4,7 @@
     <modelVersion>4.0.0</modelVersion>
 
     <packaging>pom</packaging>
-    <modules>
-        <module>qyuan-social</module>
-        <module>qyuan-social</module>
-    </modules>
-    <groupId>org.example</groupId>
+        <groupId>org.example</groupId>
         <artifactId>Qyuan</artifactId>
         <version>1.0</version>
         <name>Qyuan</name>
@@ -21,6 +17,7 @@
         <module>qyuan-common</module>
         <module>qyuan-read-notes</module>
         <module>qyuan-paper-RD</module>
+        <module>qyuan-social</module>
     </modules>
 
     <properties>

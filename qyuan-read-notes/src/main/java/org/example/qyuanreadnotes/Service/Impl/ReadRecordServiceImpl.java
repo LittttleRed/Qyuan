@@ -40,9 +40,6 @@ public class ReadRecordServiceImpl extends ServiceImpl<ReadRecordMapper,ReadReco
     @Override
     public ReadRecord getReadRecord(int userId, Integer paperId) {
         ReadRecord readRecord=readRecordMapper.getByUserAndPaper(userId,paperId);
-        if(readRecord==null){
-            throw new RuntimeException("无阅读记录");
-        }
         return readRecord;
     }
 

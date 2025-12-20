@@ -9,6 +9,6 @@ import java.util.List;
 
 @Mapper
 public interface NoteMapper extends BaseMapper<Note> {
-    @Select("SELECT * from note where user_id= #{user_id} and paper_id= #{paper_id}")
+    @Select("SELECT * from note where user_id= #{userId} and paper_id= #{paperId}")
     List<Note> getByUserAndPaper(int userId, Integer paperId);
 }
