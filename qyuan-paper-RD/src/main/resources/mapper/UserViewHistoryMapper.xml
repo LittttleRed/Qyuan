@@ -2,73 +2,44 @@
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.example.qyuanpaperrd.mapper.UserViewHistoryMapper">
 
-    <!-- 根据用户ID查询浏览历史（包含论文信息） -->
-    <select id="selectPapersByUserId" resultType="com.example.qyuanpaperrd.entity.Paper">
-        SELECT p.*
-        FROM paper p
-        INNER JOIN user_view_history h ON p.id = h.paper_id
-        WHERE h.user_id = #{userId} AND h.is_deleted = 0
-        ORDER BY h.view_time DESC
-    </select>
+  <!-- 根据用户ID查询浏览历史（包含论文信息） -->
+  <select id="selectPapersByUserId" resultType="com.example.qyuanpaperrd.entity.Paper"> SELECT p.*
+    FROM paper p INNER JOIN user_view_history h ON p.id = h.paper_id WHERE h.user_id = #{userId} AND
+    h.is_deleted = 0 ORDER BY h.view_time DESC </select>
 
-    <!-- 根据用户ID查询浏览历史记录 -->
-    <select id="selectByUserId" resultType="com.example.qyuanpaperrd.entity.UserViewHistory">
-        SELECT *
-        FROM user_view_history
-        WHERE user_id = #{userId} AND is_deleted = 0
-        ORDER BY view_time DESC
-    </select>
+  <!-- 根据用户ID查询浏览历史记录 -->
+  <select id="selectByUserId" resultType="com.example.qyuanpaperrd.entity.UserViewHistory"> SELECT *
+    FROM user_view_history WHERE user_id = #{userId} AND is_deleted = 0 ORDER BY view_time DESC </select>
 
-    <!-- 根据用户ID和论文ID查询浏览记录 -->
-    <select id="selectByUserIdAndPaperId" resultType="com.example.qyuanpaperrd.entity.UserViewHistory">
-        SELECT *
-        FROM user_view_history
-        WHERE user_id = #{userId} AND paper_id = #{paperId} AND is_deleted = 0
-        LIMIT 1
-    </select>
+  <!-- 根据用户ID和论文ID查询浏览记录 -->
+  <select id="selectByUserIdAndPaperId" resultType="com.example.qyuanpaperrd.entity.UserViewHistory">
+    SELECT * FROM user_view_history WHERE user_id = #{userId} AND paper_id = #{paperId} AND
+    is_deleted = 0 LIMIT 1 </select>
 
-    <!-- 统计用户浏览历史数量 -->
-    <select id="countByUserId" resultType="java.lang.Long">
-        SELECT COUNT(*)
-        FROM user_view_history
-        WHERE user_id = #{userId} AND is_deleted = 0
-    </select>
+  <!-- 统计用户浏览历史数量 -->
+  <select id="countByUserId" resultType="java.lang.Long"> SELECT COUNT(*) FROM user_view_history
+    WHERE user_id = #{userId} AND is_deleted = 0 </select>
 
-    <!-- 删除用户的历史记录 -->
-    <update id="deleteByUserId">
-        UPDATE user_view_history
-        SET is_deleted = 1
-        WHERE user_id = #{userId}
-    </update>
+  <!-- 删除用户的历史记录 -->
+  <update id="deleteByUserId"> UPDATE user_view_history SET is_deleted = 1 WHERE user_id = #{userId} </update>
 
-    <!-- 根据时间范围删除过期记录 -->
-    <delete id="deleteByTimeRange">
-        DELETE FROM user_view_history
-        WHERE view_time &lt; #{beforeDate}
-        <if test="limit != null">
-            LIMIT #{limit}
-        </if>
-    </delete>
+  <!-- 根据时间范围删除过期记录 -->
+  <delete id="deleteByTimeRange"> DELETE FROM user_view_history WHERE view_time &lt; #{beforeDate} <if
+      test="limit != null"> LIMIT #{limit} </if>
+  </delete>
 
-    <!-- 获取最近浏览的论文 -->
-    <select id="selectRecentPapersByUserId" resultType="com.example.qyuanpaperrd.entity.Paper">
-        SELECT DISTINCT p.*
-        FROM paper p
-        INNER JOIN user_view_history h ON p.id = h.paper_id
-        WHERE h.user_id = #{userId} AND h.is_deleted = 0
-        ORDER BY h.view_time DESC
-        <if test="limit != null">
-            LIMIT #{limit}
-        </if>
-    </select>
+  <!-- 获取最近浏览的论文 -->
+  <select id="selectRecentPapersByUserId" resultType="com.example.qyuanpaperrd.entity.Paper"> SELECT
+    DISTINCT p.* FROM paper p INNER JOIN user_view_history h ON p.id = h.paper_id WHERE h.user_id =
+    #{userId} AND h.is_deleted = 0 ORDER BY h.view_time DESC <if test="limit != null"> LIMIT
+    #{limit} </if>
+  </select>
 
-    <!-- 批量插入浏览记录 -->
-    <insert id="insertBatch" parameterType="java.util.List">
-        INSERT INTO user_view_history (user_id, paper_id, view_time, is_deleted)
-        VALUES
-        <foreach collection="histories" item="history" separator=",">
-            (#{history.userId}, #{history.paperId}, #{history.viewTime}, #{history.deleted})
-        </foreach>
-    </insert>
+  <!-- 批量插入浏览记录 -->
+  <insert id="insertBatch" parameterType="java.util.List"> INSERT INTO user_view_history (user_id,
+    paper_id, view_time, is_deleted) VALUES <foreach collection="histories" item="history"
+      separator=","> (#{history.userId}, #{history.paperId}, #{history.viewTime},
+    #{history.deleted}) </foreach>
+  </insert>
 
 </mapper>
