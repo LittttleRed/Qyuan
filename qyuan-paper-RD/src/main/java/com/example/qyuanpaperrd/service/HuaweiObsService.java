@@ -129,6 +129,7 @@ public class HuaweiObsService {
       Map<String, String> queries = new HashMap<>();
 
       // 手动计算签名
+
       String signature = querySignature("GET", headers, queries,
           obsProperties.getBucketName(), objectKey, expires);
 
@@ -150,6 +151,7 @@ public class HuaweiObsService {
   private String querySignature(String httpMethod, Map<String, String[]> headers,
       Map<String, String> queries, String bucketName, String objectName, long expires)
       throws NoSuchAlgorithmException, InvalidKeyException, UnsupportedEncodingException {
+    objectName=getFileName(objectName)+"/"+objectName+".pdf";
 
     final String SIGN_SEP = "\n";
     final String OBS_PREFIX = "x-obs-";
@@ -210,10 +212,12 @@ public class HuaweiObsService {
       throws UnsupportedEncodingException {
     StringBuilder url = new StringBuilder();
 
+
     // 构造基础URL：https://bucket.endpoint/objectKey
     url.append("https://").append(obsProperties.getBucketName())
         .append(".").append(extractDomainFromEndpoint(obsProperties.getEndpoint()))
-        .append("/").append(encodeObjectName(objectName)).append("?");
+            .append("/").append(getFileName(objectName))
+        .append("/").append(encodeObjectName(objectName)).append(".pdf").append("?");
 
     // 添加查询参数
     url.append("AccessKeyId=").append(URLEncoder.encode(obsProperties.getAccessKey(), "UTF-8"))
@@ -345,5 +349,13 @@ public class HuaweiObsService {
       log.error("下载文件时发生未知错误", e);
       throw new RuntimeException("下载文件失败: " + e.getMessage(), e);
     }
+  }
+
+  public String getFileName(String objectKey) {
+    String fileName =objectKey.split("\\.")[0];
+    if(fileName.equals(objectKey)) {
+      fileName = objectKey.split("/")[0];
+    }
+    return fileName;
   }
 }

@@ -2,6 +2,9 @@ package com.example.qyuanpaperrd.service;
 
 import com.example.qyuanpaperrd.dto.ClaimRequest;
 import com.example.qyuanpaperrd.common.PageResult;
+import com.example.qyuanpaperrd.entity.Claim;
+
+import java.util.ArrayList;
 
 /**
  * 用户交互服务接口 - 用户个人功能
@@ -17,5 +20,7 @@ public interface UserInteractionService {
      * 获取用户认领记录
      */
     PageResult<Object> getUserClaims(Long userId, Integer status, Integer page, Integer size);
+
+    void genClaim(Long userId, Long paperId, String claimPicture);
 }
 

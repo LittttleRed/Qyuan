@@ -1,11 +1,23 @@
 package com.example.qyuanpaperrd.service.impl;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
+import com.example.qyuanpaperrd.entity.AuthorPaper;
+import com.example.qyuanpaperrd.entity.Paper;
+import com.example.qyuanpaperrd.mapper.AuthorPaperMapper;
+import com.example.qyuanpaperrd.service.HuaweiObsService;
+import com.example.qyuanpaperrd.service.MinioService;
+import jakarta.annotation.Resource;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
@@ -27,12 +39,20 @@ import lombok.extern.slf4j.Slf4j;
 @RequiredArgsConstructor
 public class ClaimServiceImpl extends ServiceImpl<ClaimMapper, Claim> implements ClaimService {
 
+  @Resource
   private final ClaimMapper claimMapper;
+
+
+  @Resource
+  private final AuthorPaperMapper authorPaperMapper;
   private final PaperService paperService;
+  
+  @Autowired
+  private MinioService minioService;
 
   @Override
   @Transactional(rollbackFor = Exception.class)
-  public Long submitClaim(Long userId, ClaimRequest request) {
+  public Long submitClaim(Long userId, ClaimRequest request,String paper_title) {
     // 检查论文是否存在
     if (!paperService.existsById(request.getPaperId())) {
       throw new RuntimeException("论文不存在");
@@ -49,12 +69,28 @@ public class ClaimServiceImpl extends ServiceImpl<ClaimMapper, Claim> implements
       // 如果是驳回或未认领状态，允许重新申请
     }
 
+    // 处理上传的图片文件
+    String pictureUrl = null;
+    MultipartFile claimPicture = request.getClaimPicture();
+    if (claimPicture != null && !claimPicture.isEmpty()) {
+        try {
+            // 上传到 MinIO
+            String folder = "claims"; // 按用户ID分文件夹存储
+            String objectKey = minioService.uploadFile(claimPicture, folder);
+            pictureUrl = minioService.getPublicUrl(objectKey);
+        } catch (Exception e) {
+            log.error("上传认领图片失败", e);
+            throw new RuntimeException("上传认领图片失败: " + e.getMessage());
+        }
+    }
+
     // 创建认领记录
     Claim claim = new Claim();
     claim.setUserId(userId);
     claim.setPaperId(request.getPaperId());
-    claim.setClaimPicture(request.getClaimPicture());
+    claim.setClaimPicture(pictureUrl); // 保存图片URL而不是原始文件
     claim.setStatus(Claim.ClaimStatus.PENDING.getCode());
+    claim.setPaperTitle(paper_title);
 
     save(claim);
 
@@ -63,103 +99,98 @@ public class ClaimServiceImpl extends ServiceImpl<ClaimMapper, Claim> implements
   }
 
   @Override
-  public PageResult<Claim> getUserClaims(Long userId, Integer page, Integer size) {
-    Page<Claim> pageParam = new Page<>(page != null ? page : 1, size != null ? size : 20);
-    var claimPage = claimMapper.selectByUserId(pageParam, userId);
+  public ArrayList<Claim> genClaims(Long userId, String last_name, String first_name, String orcid) {
+    // 1. 获取作者的所有论文信息（包括论文标题）
+    ArrayList<AuthorPaper> authorPapers = new ArrayList<>(
+            authorPaperMapper.genClaims(orcid, first_name, last_name)
+    );
 
-    return PageResult.of(claimPage.getRecords(), claimPage.getTotal(),
-        claimPage.getCurrent(), claimPage.getSize());
+    if (CollectionUtils.isEmpty(authorPapers)) {
+      return new ArrayList<>();
+    }
+    // 2. 提取paperId列表
+    List<Long> paperIds = authorPapers.stream()
+            .map(AuthorPaper::getPaperId)
+            .distinct()
+            .collect(Collectors.toList());
+    // 3. 批量查询论文标题（一次查询）
+    Map<Long, String> paperTitleMap = getPaperTitleMap(paperIds);
+    // 4. 构建claims列表
+    ArrayList<Claim> claims = new ArrayList<>();
+    authorPapers.forEach(authorPaper -> {
+      Claim claim = new Claim()
+              .setUserId(userId)
+              .setPaperId(authorPaper.getPaperId())
+              .setPaperTitle(paperTitleMap.get(authorPaper.getPaperId())) // 设置论文标题
+              .setStatus(Claim.ClaimStatus.UNCLAIMED.getCode());
+      claims.add(claim);
+    });
+    // 5. 批量保存
+    this.saveBatch(claims);
+    return claims;
+  }
+  // 批量获取论文标题的方法
+  private Map<Long, String> getPaperTitleMap(List<Long> paperIds) {
+    if (CollectionUtils.isEmpty(paperIds)) {
+      return new HashMap<>();
+    }
+
+    // 方法1：使用MyBatis-Plus的selectBatchIds
+    List<Paper> papers = paperService.listByIds(paperIds);
+
+    return papers.stream()
+            .collect(Collectors.toMap(
+                    Paper::getPaperId,
+                    Paper::getTitle,
+                    (existing, replacement) -> existing
+            ));
   }
 
   @Override
-  public List<Claim> getPaperClaims(Long paperId) {
-    return claimMapper.selectByPaperId(paperId);
+  public PageResult<Claim> getAllClaims(Integer page, Integer size) {
+    Page<Claim> pageInfo = claimMapper.selectPage(new Page<>(page, size), null);
+    return  PageResult.of(
+          pageInfo.getRecords(),
+            pageInfo.getTotal(),
+            pageInfo.getCurrent(),
+            pageInfo.getSize()
+    );
   }
 
   @Override
-  public PageResult<Claim> getClaimsByStatus(Integer status, Integer page, Integer size) {
-    Page<Claim> pageParam = new Page<>(page != null ? page : 1, size != null ? size : 20);
-    var claimPage = claimMapper.selectByStatus(pageParam, status);
+  public PageResult<Claim> getUserClaims(Long userId, Integer status ,Integer page, Integer size) {
+    // 1. 构建查询条件
+    LambdaQueryWrapper<Claim> queryWrapper = new LambdaQueryWrapper<>();
+    queryWrapper.eq(Claim::getUserId, userId);
 
-    return PageResult.of(claimPage.getRecords(), claimPage.getTotal(),
-        claimPage.getCurrent(), claimPage.getSize());
+    // 2. 如果status不为null，则添加状态条件
+    if (status != null) {
+      queryWrapper.eq(Claim::getStatus, status);
+    }
+
+    // 3. 按创建时间倒序排列（假设有createTime字段）
+    // 如果没有createTime字段，可以使用claim_id倒序
+    queryWrapper.orderByDesc(Claim::getClaimId);
+    // 或者使用：queryWrapper.orderByDesc(Claim::getClaimId);
+
+    // 4. 创建分页对象
+    Page<Claim> pageInfo = new Page<>(page, size);
+
+    // 5. 执行分页查询
+    Page<Claim> resultPage = claimMapper.selectPage(pageInfo, queryWrapper);
+
+    // 6. 返回自定义的分页结果
+    return PageResult.of(
+            resultPage.getRecords(),
+            resultPage.getTotal(),
+            resultPage.getCurrent(),
+            resultPage.getSize()
+    );
   }
 
   @Override
-  public Boolean hasUserClaimedPaper(Long userId, Long paperId) {
-    Claim claim = claimMapper.selectByUserIdAndPaperId(userId, paperId);
-    return claim != null && claim.getStatus() != Claim.ClaimStatus.UNCLAIMED.getCode();
+  public void updateClaim(Long claim_id, Integer status) {
+    claimMapper.updateStatus(claim_id,status);
   }
 
-  @Override
-  @Transactional(rollbackFor = Exception.class)
-  public Boolean reviewClaim(Long claimId, Integer status, String reviewComment) {
-    Claim claim = getById(claimId);
-    if (claim == null) {
-      throw new RuntimeException("认领记录不存在");
-    }
-
-    if (claim.getStatus() != Claim.ClaimStatus.PENDING.getCode()) {
-      throw new RuntimeException("只能审核待审核状态的认领申请");
-    }
-
-    // 更新认领状态
-    boolean result = claimMapper.updateStatus(claimId, status) > 0;
-
-    if (result) {
-      // 如果审核通过，创建用户论文关系
-      if (status == Claim.ClaimStatus.APPROVED.getCode()) {
-        // 这里可以调用用户论文关系服务来创建关系
-        log.info("认领申请审核通过，认领ID：{}", claimId);
-      }
-
-      log.info("认领申请审核完成，认领ID：{}，状态：{}", claimId, status);
-    }
-
-    return result;
-  }
-
-  @Override
-  @Transactional(rollbackFor = Exception.class)
-  public Boolean withdrawClaim(Long claimId, Long userId) {
-    Claim claim = getById(claimId);
-    if (claim == null) {
-      throw new RuntimeException("认领记录不存在");
-    }
-
-    if (!claim.getUserId().equals(userId)) {
-      throw new RuntimeException("无权操作此认领记录");
-    }
-
-    if (claim.getStatus() != Claim.ClaimStatus.PENDING.getCode()) {
-      throw new RuntimeException("只能撤回待审核状态的认领申请");
-    }
-
-    // 更新状态为未认领
-    return claimMapper.updateStatus(claimId, Claim.ClaimStatus.UNCLAIMED.getCode()) > 0;
-  }
-
-  @Override
-  public Map<String, Object> getUserClaimStats(Long userId) {
-    Map<String, Object> stats = new HashMap<>();
-
-    // 总认领数
-    Long totalClaims = claimMapper.countByUserId(userId);
-    stats.put("totalClaims", totalClaims);
-
-    // 各状态认领数
-    List<Map<String, Object>> statusCounts = claimMapper.countByStatus();
-    Map<Integer, Long> statusMap = new HashMap<>();
-    for (Map<String, Object> countMap : statusCounts) {
-      Integer status = (Integer) countMap.get("status");
-      Long count = (Long) countMap.get("count");
-      statusMap.put(status, count);
-    }
-
-    stats.put("pendingClaims", statusMap.getOrDefault(Claim.ClaimStatus.PENDING.getCode(), 0L));
-    stats.put("approvedClaims", statusMap.getOrDefault(Claim.ClaimStatus.APPROVED.getCode(), 0L));
-    stats.put("rejectedClaims", statusMap.getOrDefault(Claim.ClaimStatus.REJECTED.getCode(), 0L));
-
-    return stats;
-  }
 }

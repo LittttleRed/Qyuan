@@ -34,6 +34,8 @@ public class Claim {
     @TableField("paper_id")
     private Long paperId;
 
+    @TableField("paper_title")
+    private String paperTitle;
     /**
      * 认领信息图片url
      */

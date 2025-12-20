@@ -1,7 +1,16 @@
 package com.example.qyuanpaperrd.service.impl;
 
+import java.util.ArrayList;
 import java.util.Collections;
 
+import com.baomidou.mybatisplus.core.mapper.BaseMapper;
+import com.baomidou.mybatisplus.extension.service.IService;
+import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.example.qyuanpaperrd.entity.AuthorPaper;
+import com.example.qyuanpaperrd.entity.Claim;
+import com.example.qyuanpaperrd.mapper.AuthorPaperMapper;
+import com.example.qyuanpaperrd.mapper.ClaimMapper;
+import jakarta.annotation.Resource;
 import org.springframework.stereotype.Service;
 
 import com.example.qyuanpaperrd.common.PageResult;
@@ -18,12 +27,29 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 @Service
 @RequiredArgsConstructor
-public class UserInteractionServiceImpl implements UserInteractionService {
+public class UserInteractionServiceImpl extends ServiceImpl<ClaimMapper,Claim> implements UserInteractionService{
 
-  @Override
+  @Resource
+  private AuthorPaperMapper authorPaperMapper;
+
+  @Resource
+  private ClaimMapper claimMapper;
+
+
+    @Override
+    public void genClaim(Long userId, Long paperId, String claimPicture) {
+         claimMapper.insert(new Claim()
+            .setUserId(userId)
+            .setPaperId(paperId)
+            .setClaimPicture(claimPicture)
+            .setStatus(Claim.ClaimStatus.PENDING.getCode())
+        );
+    }
+
+    @Override
   public void claimPaper(Long userId, ClaimRequest request) {
     log.info("用户认领论文，用户ID: {}, 论文ID: {}", userId, request.getPaperId());
-    // TODO: 实现论文认领功能
+
   }
 
   @Override

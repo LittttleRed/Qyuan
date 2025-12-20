@@ -34,6 +34,12 @@ huawei:
     bucketName: ${HUAWEICLOUD_SDK_BUCKET_NAME}
     expiration: 60
 
+minio:
+  endpoint: http://120.46.205.113:9098
+  accessKey: admin
+  secretKey: QianYuanWanMa_18
+  bucketName: audit
+
 springdoc:
   api-docs:
     enabled: true
@@ -50,4 +56,3 @@ springdoc:
 logging:
   level:
     com.example.qyuanpaperrd: DEBUG
-

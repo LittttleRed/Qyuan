@@ -1,6 +1,7 @@
 package com.example.qyuanpaperrd.dto;
 
 import lombok.Data;
+import org.springframework.web.multipart.MultipartFile;
 
 import jakarta.validation.constraints.NotNull;
 
@@ -17,12 +18,7 @@ public class ClaimRequest {
     private Long paperId;
 
     /**
-     * 认领信息图片URL
+     * 认领信息图片文件
      */
-    private String claimPicture;
-
-    /**
-     * 认领说明
-     */
-    private String claimDescription;
+    private MultipartFile claimPicture;
 }
