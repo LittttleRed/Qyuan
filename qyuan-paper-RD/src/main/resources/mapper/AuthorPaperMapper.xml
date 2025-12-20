@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.example.qyuanpaperrd.mapper.AuthorPaperMapper">
+
+    <!-- 作者论文关系结果映射 -->
+    <resultMap id="BaseResultMap" type="com.example.qyuanpaperrd.entity.AuthorPaper">
+        <id column="id" property="id" jdbcType="BIGINT"/>
+        <result column="paper_id" property="paperId" jdbcType="BIGINT"/>
+        <result column="author_last_name" property="authorLastName" jdbcType="VARCHAR"/>
+        <result column="author_first_name" property="authorFirstName" jdbcType="VARCHAR"/>
+        <result column="author_rank" property="authorRank" jdbcType="INTEGER"/>
+        <result column="author_orcid" property="authorOrcid" jdbcType="VARCHAR"/>
+    </resultMap>
+
+    <!-- 根据论文ID获取作者列表 -->
+    <select id="selectByPaperId" resultMap="BaseResultMap">
+        SELECT * FROM author_paper
+        WHERE paper_id = #{paperId}
+        ORDER BY author_rank ASC
+    </select>
+
+    <!-- 根据作者姓名查询论文关系 -->
+    <select id="selectByAuthorName" resultMap="BaseResultMap">
+        SELECT * FROM author_paper
+        WHERE (author_last_name LIKE CONCAT('%', #{authorName}, '%')
+             OR author_first_name LIKE CONCAT('%', #{authorName}, '%'))
+    </select>
+
+    <!-- 根据ORCID查询论文关系 -->
+    <select id="selectByOrcid" resultMap="BaseResultMap">
+        SELECT * FROM author_paper
+        WHERE author_orcid = #{orcid}
+    </select>
+
+    <!-- 根据论文ID和作者次序查询 -->
+    <select id="selectByPaperIdAndRank" resultMap="BaseResultMap">
+        SELECT * FROM author_paper
+        WHERE paper_id = #{paperId} AND author_rank = #{rank}
+        LIMIT 1
+    </select>
+
+    <!-- 批量插入作者论文关系 -->
+    <insert id="insertBatch" parameterType="java.util.List">
+        INSERT INTO author_paper (
+            paper_id, author_last_name, author_first_name, author_rank, author_orcid
+        ) VALUES
+        <foreach collection="authorPapers" item="ap" separator=",">
+            (#{ap.paperId}, #{ap.authorLastName}, #{ap.authorFirstName},
+             #{ap.authorRank}, #{ap.authorOrcid})
+        </foreach>
+    </insert>
+
+    <!-- 根据论文ID删除作者关系 -->
+    <delete id="deleteByPaperId">
+        DELETE FROM author_paper WHERE paper_id = #{paperId}
+    </delete>
+
+</mapper>

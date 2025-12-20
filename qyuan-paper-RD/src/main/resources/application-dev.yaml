@@ -1,0 +1,40 @@
+spring:
+  datasource:
+    url: jdbc:sqlite:./data/qyuan.db
+    driver-class-name: org.sqlite.JDBC
+    username: sa
+    password:
+
+  cloud:
+    nacos:
+      enabled: false
+      discovery:
+        enabled: false
+      config:
+        enabled: false
+
+huawei:
+  obs:
+    enabled: true
+    endpoint: ${HUAWEICLOUD_SDK_ENDPOINT}
+    accessKey: ${HUAWEICLOUD_SDK_AK}
+    secretAccessKey: ${HUAWEICLOUD_SDK_SK}
+    bucketName: ${HUAWEICLOUD_SDK_BUCKET_NAME}
+    expiration: 60
+
+springdoc:
+  api-docs:
+    enabled: true
+    path: /api-docs
+  swagger-ui:
+    enabled: true
+    path: /swagger-ui.html
+    operations-sorter: method
+    tags-sorter: alpha
+    display-request-duration: true
+  packages-to-scan: com.example.qyuanpaperrd.controller
+  paths-to-match: /api/**
+
+logging:
+  level:
+    com.example.qyuanpaperrd: DEBUG

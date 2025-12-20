@@ -1,0 +1,41 @@
+spring:
+  profiles:
+    active: dev
+server:
+  port: 9000
+
+# 华为云 OBS 配置
+huawei:
+  obs:
+    enabled: true
+    endpoint: ${HUAWEICLOUD_SDK_ENDPOINT}
+    accessKey: ${HUAWEICLOUD_SDK_AK}
+    secretAccessKey: ${HUAWEICLOUD_SDK_SK}
+    bucketName: ${HUAWEICLOUD_SDK_BUCKET_NAME}
+    expiration: 60
+
+---
+# development environment
+spring:
+  config:
+    activate:
+      on-profile: dev
+    import: classpath:.env.dev.properties
+  application:
+    name: qyuan-paper-RD
+  cloud:
+    nacos:
+      discovery:
+        server-addr: ${NACOS_IP}:${NACOS_PORT}
+        namespace: ${NACOS_NAMESPACE}
+        group: Qyuan
+        username: nacos
+        password: QianYuanWanMa_18
+      config:
+        server-addr: ${NACOS_IP}:${NACOS_PORT}
+        namespace: ${NACOS_NAMESPACE}
+        file-extension: yaml
+        group: Qyuan
+        timeout: 10000
+        username: nacos
+        password: QianYuanWanMa_18

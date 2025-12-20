@@ -16,6 +16,7 @@
         <module>qyuan-gateway</module>
         <module>qyuan-common</module>
         <module>qyuan-read-notes</module>
+        <module>qyuan-paper-RD</module>
     </modules>
 
     <properties>
@@ -50,6 +51,8 @@
         <fastjson.version>2.0.33</fastjson.version>
 
         <validation.version>3.0.2</validation.version>
+
+        <huaweicloud-sdk.version>3.1.176</huaweicloud-sdk.version>
     </properties>
 
     <dependencyManagement>
@@ -167,6 +170,12 @@
                 <artifactId>minio</artifactId>
                 <version>${minio.version}</version>
             </dependency>
+
+            <dependency>
+                <groupId>com.huaweicloud.sdk</groupId>
+                <artifactId>huaweicloud-sdk-obs</artifactId>
+                <version>${huaweicloud-sdk.version}</version>
+            </dependency>
         </dependencies>
     </dependencyManagement>
 
@@ -184,10 +193,12 @@
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
                 <configuration>
-                    <source>${java.version}</source>
-                    <target>${java.version}</target>
+                    <release>${java.version}</release>
+                    <compilerArgs>
+                        <arg>-parameters</arg>
+                    </compilerArgs>
                 </configuration>
-                <version>3.11.0</version>
+                <version>3.13.0</version>
             </plugin>
         </plugins>
         <pluginManagement>

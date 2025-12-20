@@ -1,0 +1,47 @@
+spring:
+  datasource:
+    url: jdbc:h2:mem:testdb;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE;MODE=MYSQL
+    driver-class-name: org.h2.Driver
+    username: sa
+    password: 
+  h2:
+    console:
+      enabled: true
+  main:
+    allow-bean-definition-overriding: true
+  cloud:
+    nacos:
+      discovery:
+        enabled: false
+      config:
+        enabled: false
+  security:
+    autoconfigure:
+      exclude:
+        - org.springframework.boot.autoconfigure.security.servlet.SecurityAutoConfiguration
+        - org.springframework.boot.autoconfigure.security.servlet.UserDetailsServiceAutoConfiguration
+
+mybatis-plus:
+  configuration:
+    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+  global-config:
+    db-config:
+      logic-delete-field: deleted
+      logic-delete-value: 1
+      logic-not-delete-value: 0
+
+logging:
+  level:
+    com.example.qyuanpaperrd: DEBUG
+    org.springframework.web: INFO
+    org.springframework.security: INFO
+    org.springframework.boot.test: DEBUG
+    com.alibaba.nacos: ERROR
+
+huawei:
+  obs:
+    enabled: true
+
+server:
+  error:
+    include-message: always

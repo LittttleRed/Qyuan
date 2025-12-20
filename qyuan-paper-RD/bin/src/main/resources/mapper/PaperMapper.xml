@@ -1,0 +1,137 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.example.qyuanpaperrd.mapper.PaperMapper">
+
+    <!-- 论文结果映射 -->
+    <resultMap id="BaseResultMap" type="com.example.qyuanpaperrd.entity.Paper">
+        <id column="paper_id" property="paperId" jdbcType="BIGINT"/>
+        <result column="title" property="title" jdbcType="VARCHAR"/>
+        <result column="submitter" property="submitter" jdbcType="VARCHAR"/>
+        <result column="abstract" property="abstractText" jdbcType="LONGVARCHAR"/>
+        <result column="doi" property="doi" jdbcType="VARCHAR"/>
+        <result column="journal_source" property="journalSource" jdbcType="VARCHAR"/>
+        <result column="pdf_file_url" property="pdfFileUrl" jdbcType="VARCHAR"/>
+        <result column="url" property="url" jdbcType="VARCHAR"/>
+        <result column="category_id" property="categoryId" jdbcType="BIGINT"/>
+        <result column="updated" property="updated" jdbcType="TIMESTAMP"/>
+    </resultMap>
+
+    <!-- 搜索论文 -->
+    <select id="searchPapers" resultMap="BaseResultMap">
+        SELECT p.* FROM paper p
+        <where>
+            1 = 1
+            <if test="request.keyword != null and request.keyword != ''">
+                AND (
+                <choose>
+                    <when test="request.searchField == 'title'">
+                        p.title LIKE CONCAT('%', #{request.keyword}, '%')
+                    </when>
+                    <when test="request.searchField == 'author'">
+                        EXISTS (
+                            SELECT 1 FROM author_paper ap
+                            WHERE ap.paper_id = p.paper_id
+                            AND (ap.author_last_name LIKE CONCAT('%', #{request.keyword}, '%')
+                                 OR ap.author_first_name LIKE CONCAT('%', #{request.keyword}, '%'))
+                        )
+                    </when>
+                    <when test="request.searchField == 'abstract'">
+                        p.abstract LIKE CONCAT('%', #{request.keyword}, '%')
+                    </when>
+                    <otherwise>
+                        p.title LIKE CONCAT('%', #{request.keyword}, '%')
+                        OR p.abstract LIKE CONCAT('%', #{request.keyword}, '%')
+                        OR EXISTS (
+                            SELECT 1 FROM author_paper ap
+                            WHERE ap.paper_id = p.paper_id
+                            AND (ap.author_last_name LIKE CONCAT('%', #{request.keyword}, '%')
+                                 OR ap.author_first_name LIKE CONCAT('%', #{request.keyword}, '%'))
+                        )
+                        OR p.journal_source LIKE CONCAT('%', #{request.keyword}, '%')
+                    </otherwise>
+                </choose>
+                )
+            </if>
+            <if test="request.categoryId != null">
+                AND p.category_id = #{request.categoryId}
+            </if>
+            <if test="request.journalName != null and request.journalName != ''">
+                AND p.journal_source LIKE CONCAT('%', #{request.journalName}, '%')
+            </if>
+            <if test="request.yearStart != null">
+                AND YEAR(p.updated) >= #{request.yearStart}
+            </if>
+            <if test="request.yearEnd != null">
+                AND YEAR(p.updated) <= #{request.yearEnd}
+            </if>
+        </where>
+        <choose>
+            <when test="request.sortBy == 'title'">
+                ORDER BY p.title ${request.sortOrder == 'asc' ? 'ASC' : 'DESC'}
+            </when>
+            <when test="request.sortBy == 'date'">
+                ORDER BY p.updated ${request.sortOrder == 'asc' ? 'ASC' : 'DESC'}
+            </when>
+            <when test="request.sortBy == 'author'">
+                ORDER BY p.title ${request.sortOrder == 'asc' ? 'ASC' : 'DESC'}
+            </when>
+            <otherwise>
+                ORDER BY p.updated DESC
+            </otherwise>
+        </choose>
+    </select>
+
+    <!-- 根据DOI查询论文 -->
+    <select id="selectByDoi" resultMap="BaseResultMap">
+        SELECT * FROM paper WHERE doi = #{doi} LIMIT 1
+    </select>
+
+    <!-- 根据作者姓名搜索论文 -->
+    <select id="selectByAuthorName" resultMap="BaseResultMap">
+        SELECT DISTINCT p.* FROM paper p
+        INNER JOIN author_paper ap ON p.paper_id = ap.paper_id
+        WHERE (ap.author_last_name LIKE CONCAT('%', #{authorName}, '%')
+             OR ap.author_first_name LIKE CONCAT('%', #{authorName}, '%'))
+        ORDER BY p.updated DESC
+    </select>
+
+    <!-- 根据期刊名称搜索论文 -->
+    <select id="selectByJournalName" resultMap="BaseResultMap">
+        SELECT * FROM paper
+        WHERE journal_source LIKE CONCAT('%', #{journalName}, '%')
+        ORDER BY updated DESC
+    </select>
+
+    <!-- 获取热门论文 -->
+    <select id="selectPopularPapers" resultMap="BaseResultMap">
+        SELECT p.* FROM paper p
+        ORDER BY p.updated DESC
+        LIMIT #{limit}
+    </select>
+
+    <!-- 获取最新论文 -->
+    <select id="selectLatestPapers" resultMap="BaseResultMap">
+        SELECT * FROM paper
+        ORDER BY updated DESC
+        LIMIT #{limit}
+    </select>
+
+    <!-- 根据分类ID获取论文 -->
+    <select id="selectByCategoryId" resultMap="BaseResultMap">
+        SELECT * FROM paper
+        WHERE category_id = #{categoryId}
+        ORDER BY updated DESC
+    </select>
+
+    <!-- 批量插入论文 -->
+    <insert id="insertBatch" parameterType="java.util.List">
+        INSERT INTO paper (
+            title, submitter, abstract, doi, journal_source, pdf_file_url, url, category_id, updated
+        ) VALUES
+        <foreach collection="papers" item="paper" separator=",">
+            (#{paper.title}, #{paper.submitter}, #{paper.abstractText}, #{paper.doi},
+             #{paper.journalSource}, #{paper.pdfFileUrl}, #{paper.url}, #{paper.categoryId}, NOW())
+        </foreach>
+    </insert>
+
+</mapper>
