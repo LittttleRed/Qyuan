@@ -11,6 +11,8 @@ import com.example.qyuanpaperrd.common.PageResult;
 import com.example.qyuanpaperrd.service.PaperService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -42,6 +44,11 @@ public class PaperController {
 
     @GetMapping("/search")
     @Operation(summary = "搜索论文", description = "根据关键词、分类、期刊等条件搜索论文")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "搜索成功"),
+        @ApiResponse(responseCode = "400", description = "参数错误"),
+        @ApiResponse(responseCode = "500", description = "搜索失败")
+    })
     public ResponseEntity<Result<PageResult<PaperDTO>>> searchPapers(
             @Parameter(description = "搜索关键词，可以为空")
             @RequestParam(required = false) String query,
@@ -99,6 +106,11 @@ public class PaperController {
 
     @GetMapping("/{paperId}")
     @Operation(summary = "获取论文详情", description = "根据论文ID获取详细信息")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "获取成功"),
+        @ApiResponse(responseCode = "404", description = "论文不存在"),
+        @ApiResponse(responseCode = "500", description = "获取详情失败")
+    })
     public ResponseEntity<Result<PaperDTO>> getPaperById(
             @Parameter(description = "论文ID", required = true)
             @PathVariable @NotNull Long paperId) {
@@ -119,6 +131,10 @@ public class PaperController {
 
     @GetMapping("/{paperId}/download")
     @Operation(summary = "下载论文PDF", description = "获取论文PDF文件的下载链接")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "获取下载链接成功"),
+        @ApiResponse(responseCode = "500", description = "下载失败")
+    })
     public ResponseEntity<Result<Map<String, String>>> downloadPaper(
             @Parameter(description = "论文ID", required = true)
             @PathVariable @NotNull Long paperId) {
@@ -136,6 +152,11 @@ public class PaperController {
 
     @GetMapping("/{paperId}/authors")
     @Operation(summary = "获取论文作者列表", description = "获取指定论文的所有作者信息")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "获取成功"),
+        @ApiResponse(responseCode = "404", description = "论文不存在"),
+        @ApiResponse(responseCode = "500", description = "获取作者失败")
+    })
     public ResponseEntity<Result<List<AuthorDTO>>> getPaperAuthors(
             @Parameter(description = "论文ID", required = true)
             @PathVariable @NotNull Long paperId) {
@@ -159,6 +180,10 @@ public class PaperController {
     
     @PostMapping("/export")
     @Operation(summary = "导出论文信息", description = "导出论文为BibTeX或RIS格式")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "导出成功"),
+        @ApiResponse(responseCode = "500", description = "导出失败")
+    })
     public ResponseEntity<Result<String>> exportPapers(
             @Parameter(description = "导出请求", required = true)
             @Valid @RequestBody PaperExportRequest request) {
@@ -174,6 +199,11 @@ public class PaperController {
 
     @GetMapping("/{paperId}/references")
     @Operation(summary = "获取论文引用关系", description = "获取指定论文的引用信息或被引用信息")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "获取成功"),
+        @ApiResponse(responseCode = "400", description = "参数错误"),
+        @ApiResponse(responseCode = "500", description = "获取引用关系失败")
+    })
     public ResponseEntity<Result<List<CitationDTO>>> getPaperReferences(
             @Parameter(description = "论文ID", required = true)
             @PathVariable @NotNull Long paperId,
@@ -203,6 +233,10 @@ public class PaperController {
     @PostMapping
     @PreAuthorize("hasRole('ADMIN') or hasRole('EDITOR')")
     @Operation(summary = "添加论文", description = "新增论文信息（管理员/编辑者权限）")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "201", description = "论文添加成功"),
+        @ApiResponse(responseCode = "500", description = "添加失败")
+    })
     public ResponseEntity<Result<PaperDTO>> addPaper(
             @Parameter(description = "论文信息", required = true)
             @Valid @RequestBody PaperAddRequest request) {
@@ -220,6 +254,10 @@ public class PaperController {
     @PutMapping("/{paperId}")
     @PreAuthorize("hasRole('ADMIN') or hasRole('EDITOR')")
     @Operation(summary = "更新论文", description = "更新论文信息（管理员/编辑者权限）")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "论文更新成功"),
+        @ApiResponse(responseCode = "500", description = "更新失败")
+    })
     public ResponseEntity<Result<PaperDTO>> updatePaper(
             @Parameter(description = "论文ID", required = true)
             @PathVariable @NotNull Long paperId,
@@ -239,6 +277,10 @@ public class PaperController {
     @DeleteMapping("/{paperId}")
     @PreAuthorize("hasRole('ADMIN')")
     @Operation(summary = "删除论文", description = "删除指定论文（管理员权限）")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "论文删除成功"),
+        @ApiResponse(responseCode = "500", description = "删除失败")
+    })
     public ResponseEntity<Result<String>> deletePaper(
             @Parameter(description = "论文ID", required = true)
             @PathVariable @NotNull Long paperId) {
@@ -255,6 +297,10 @@ public class PaperController {
     @PostMapping("/batch")
     @PreAuthorize("hasRole('ADMIN') or hasRole('EDITOR')")
     @Operation(summary = "批量导入论文", description = "批量导入论文信息（管理员/编辑者权限）")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "批量导入成功"),
+        @ApiResponse(responseCode = "500", description = "批量导入失败")
+    })
     public ResponseEntity<Result<Integer>> batchImportPapers(
             @Parameter(description = "论文列表", required = true)
             @Valid @RequestBody List<PaperAddRequest> papers) {

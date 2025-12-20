@@ -7,6 +7,8 @@ import com.example.qyuanpaperrd.service.PatentService;
 import com.example.qyuanpaperrd.util.HeaderUtil;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -36,6 +38,10 @@ public class PatentController {
 
     @GetMapping("/{patentNumber}")
     @Operation(summary = "获取专利详情", description = "根据专利申请号获取专利详细信息")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "获取成功"),
+        @ApiResponse(responseCode = "404", description = "专利不存在")
+    })
     public ResponseEntity<Result<PatentDTO>> getPatentByNumber(
             @Parameter(description = "专利申请号", required = true)
             @PathVariable @NotBlank String patentNumber,
@@ -56,6 +62,9 @@ public class PatentController {
 
     @GetMapping("/search")
     @Operation(summary = "搜索专利", description = "根据关键词、发明人、专利权人或国家搜索专利")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "搜索成功")
+    })
     public ResponseEntity<Result<PageResult<PatentDTO>>> searchPatents(
             @Parameter(description = "搜索关键词")
             @RequestParam(required = false) String keyword,

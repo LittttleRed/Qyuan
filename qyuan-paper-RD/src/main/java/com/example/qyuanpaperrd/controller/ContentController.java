@@ -7,6 +7,8 @@ import com.example.qyuanpaperrd.service.PaperService;
 import com.example.qyuanpaperrd.service.PatentService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -35,6 +37,11 @@ public class ContentController {
 
     @GetMapping("/popular")
     @Operation(summary = "获取热门内容", description = "获取热门论文或专利")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "获取成功"),
+        @ApiResponse(responseCode = "400", description = "参数错误"),
+        @ApiResponse(responseCode = "500", description = "获取热门内容失败")
+    })
     public ResponseEntity<Result<List<?>>> getPopularContent(
             @Parameter(description = "返回数量限制，默认10")
             @RequestParam(defaultValue = "10") @Min(1) Integer limit,
@@ -62,6 +69,11 @@ public class ContentController {
 
     @GetMapping("/latest")
     @Operation(summary = "获取最新内容", description = "获取最新论文或专利")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "获取成功"),
+        @ApiResponse(responseCode = "400", description = "参数错误"),
+        @ApiResponse(responseCode = "500", description = "获取最新内容失败")
+    })
     public ResponseEntity<Result<List<?>>> getLatestContent(
             @Parameter(description = "返回数量限制，默认10")
             @RequestParam(defaultValue = "10") @Min(1) Integer limit,

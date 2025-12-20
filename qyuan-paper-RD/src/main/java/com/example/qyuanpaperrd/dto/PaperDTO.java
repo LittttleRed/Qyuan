@@ -77,16 +77,6 @@ public class PaperDTO {
     private Integer downloadCount;
 
     /**
-     * 收藏次数
-     */
-    private Integer favoriteCount;
-
-    /**
-     * 是否已被当前用户收藏
-     */
-    private Boolean isFavorited;
-
-    /**
      * 是否已被当前用户认领
      */
     private Boolean isClaimed;

@@ -1,5 +1,6 @@
 package com.example.qyuanpaperrd.common;
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 
 import java.util.List;
@@ -8,31 +9,37 @@ import java.util.List;
  * 分页响应结果类
  */
 @Data
+@Schema(description = "分页响应结果")
 public class PageResult<T> {
 
     /**
      * 数据列表
      */
+    @Schema(description = "数据列表")
     private List<T> records;
 
     /**
      * 总记录数
      */
+    @Schema(description = "总记录数", example = "100")
     private Long total;
 
     /**
      * 当前页码
      */
+    @Schema(description = "当前页码", example = "1")
     private Long current;
 
     /**
      * 每页大小
      */
+    @Schema(description = "每页大小", example = "20")
     private Long size;
 
     /**
      * 总页数
      */
+    @Schema(description = "总页数", example = "5")
     private Long pages;
 
     public PageResult() {}

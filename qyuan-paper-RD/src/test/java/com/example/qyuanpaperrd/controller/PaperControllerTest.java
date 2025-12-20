@@ -56,8 +56,6 @@ class PaperControllerTest {
         mockPaper.setCreated(LocalDateTime.now());
         mockPaper.setUpdated(LocalDateTime.now());
         mockPaper.setDownloadCount(0);
-        mockPaper.setFavoriteCount(0);
-        mockPaper.setIsFavorited(false);
         mockPaper.setIsClaimed(false);
 
         mockPageResult = new PageResult<>();
