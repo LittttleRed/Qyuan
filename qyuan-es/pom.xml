@@ -48,6 +48,19 @@
             <artifactId>spring-cloud-loadbalancer</artifactId>
         </dependency>
 
+        <!-- elasticSearch依赖 -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-data-elasticsearch</artifactId>
+            <version>3.0.7</version>
+        </dependency>
+
+        <!-- Jackson用于elasticSearch序列化 -->
+        <dependency>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-databind</artifactId>
+        </dependency>
+
         <!-- 数据访问 -->
         <dependency>
             <groupId>com.baomidou</groupId>
@@ -60,15 +73,26 @@
 
         <!-- Redis -->
         <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-data-redis</artifactId>
+        </dependency>
+        <dependency>
             <groupId>org.apache.commons</groupId>
             <artifactId>commons-pool2</artifactId>
         </dependency>
 
-        <!-- 工具类 -->
+        <!-- Kafka -->
         <dependency>
-            <groupId>org.projectlombok</groupId>
-            <artifactId>lombok</artifactId>
+            <groupId>org.springframework.kafka</groupId>
+            <artifactId>spring-kafka</artifactId>
         </dependency>
+
+        <!-- 工具类 -->
+    <dependency>
+        <groupId>org.projectlombok</groupId>
+        <artifactId>lombok</artifactId>
+    </dependency>
+
 
         <dependency>
             <groupId>com.fasterxml.jackson.core</groupId>

@@ -2,7 +2,7 @@ spring:
   profiles:
     active: dev
 server:
-  port: 9000
+  port: 9724
 
 ---
 # development environment
@@ -19,9 +19,16 @@ spring:
         server-addr: ${NACOS_IP}:${NACOS_PORT}
         namespace: ${NACOS_NAMESPACE}
         group: Qyuan
+        username: nacos
+        password: QianYuanWanMa_18
       config:
         server-addr: ${NACOS_IP}:${NACOS_PORT}
         namespace: ${NACOS_NAMESPACE}
         file-extension: yaml
         group: Qyuan
         timeout: 10000
+        username: nacos
+        password: QianYuanWanMa_18
+
+
+debug: true
