@@ -19,7 +19,7 @@ import java.util.Map;
  */
 @Slf4j
 @RestController
-@RequestMapping("/api/files")
+@RequestMapping("/paper/files")
 @RequiredArgsConstructor
 @Tag(name = "文件管理", description = "文件上传下载管理接口")
 @ConditionalOnProperty(prefix = "huawei.obs", name = "enabled", havingValue = "true", matchIfMissing = false)

@@ -13,6 +13,18 @@ spring:
       config:
         enabled: false
 
+  # 开发工具配置
+  devtools:
+    restart:
+      enabled: true  # 启用自动重启
+      additional-paths: src/main/java  # 监听额外路径
+      exclude: static/**,public/**  # 排除不需要热重载的目录
+    livereload:
+      enabled: true  # 启用 live reload
+    # 远程开发支持
+    remote:
+      secret: mysecret  # 远程连接密钥
+
 huawei:
   obs:
     enabled: true
@@ -33,8 +45,9 @@ springdoc:
     tags-sorter: alpha
     display-request-duration: true
   packages-to-scan: com.example.qyuanpaperrd.controller
-  paths-to-match: /api/**
+  paths-to-match: /paper/**
 
 logging:
   level:
     com.example.qyuanpaperrd: DEBUG
+

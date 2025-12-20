@@ -189,6 +189,15 @@
       <version>1.0</version>
       <scope>compile</scope>
     </dependency>
+
+    <!-- Spring Boot DevTools - 热重载支持 -->
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-devtools</artifactId>
+      <scope>runtime</scope>
+      <optional>true</optional>
+    </dependency>
+
   </dependencies>
 
   <build>

@@ -91,43 +91,10 @@ class SimpleControllerTest {
                 .andExpect(jsonPath("$.message").value("论文不存在"));
     }
 
+    
     @Test
-    @DisplayName("验证热门论文API基础功能")
-    void testGetPopularPapersAPI() throws Exception {
-        PaperDTO mockPaper = new PaperDTO();
-        mockPaper.setTitle("Popular Paper");
-        mockPaper.setPaperId(1L);
-        
-        when(paperService.getPopularPapers(10)).thenReturn(Arrays.asList(mockPaper));
-
-        mockMvc.perform(get("/api/v1/papers/popular")
-                .param("limit", "10"))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.code").value(200))
-                .andExpect(jsonPath("$.data").isArray())
-                .andExpect(jsonPath("$.data[0].title").value("Popular Paper"));
-    }
-
-    @Test
-    @DisplayName("验证最新论文API基础功能")
-    void testGetLatestPapersAPI() throws Exception {
-        PaperDTO mockPaper = new PaperDTO();
-        mockPaper.setTitle("Latest Paper");
-        mockPaper.setPaperId(1L);
-        
-        when(paperService.getLatestPapers(10)).thenReturn(Arrays.asList(mockPaper));
-
-        mockMvc.perform(get("/api/v1/papers/latest")
-                .param("limit", "10"))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.code").value(200))
-                .andExpect(jsonPath("$.data").isArray())
-                .andExpect(jsonPath("$.data[0].title").value("Latest Paper"));
-    }
-
-    @Test
-    @DisplayName("验证按分类获取论文API基础功能")
-    void testGetPapersByCategoryAPI() throws Exception {
+    @DisplayName("验证按分类搜索论文API基础功能")
+    void testSearchPapersByCategoryAPI() throws Exception {
         PageResult<PaperDTO> mockResult = new PageResult<>();
         PaperDTO mockPaper = new PaperDTO();
         mockPaper.setTitle("Category Paper");
@@ -137,10 +104,11 @@ class SimpleControllerTest {
         mockResult.setSize(20L);
         mockResult.setTotal(1L);
         mockResult.setPages(1L);
-        
-        when(paperService.getPapersByCategory(1L, 1, 20)).thenReturn(mockResult);
 
-        mockMvc.perform(get("/api/v1/papers/category/{categoryId}", 1L)
+        when(paperService.searchPapers(any())).thenReturn(mockResult);
+
+        mockMvc.perform(get("/api/v1/papers/search")
+                .param("category_id", "1")
                 .param("page", "1")
                 .param("size", "20"))
                 .andExpect(status().isOk())

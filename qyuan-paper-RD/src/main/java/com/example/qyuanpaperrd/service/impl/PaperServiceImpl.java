@@ -5,6 +5,9 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 import org.springframework.beans.BeanUtils;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.cache.annotation.Caching;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
@@ -58,6 +61,7 @@ public class PaperServiceImpl extends ServiceImpl<PaperMapper, Paper> implements
   }
 
   @Override
+  @Cacheable(value = "paper", key = "#paperId", unless = "#result == null")
   public PaperDTO getPaperById(Long paperId) {
     Paper paper = getById(paperId);
     if (paper == null) {
@@ -67,6 +71,7 @@ public class PaperServiceImpl extends ServiceImpl<PaperMapper, Paper> implements
   }
 
   @Override
+  @Cacheable(value = "paper", key = "'doi:' + #doi", unless = "#result == null")
   public PaperDTO getPaperByDoi(String doi) {
     Paper paper = paperMapper.selectByDoi(doi);
     if (paper == null) {
@@ -77,6 +82,11 @@ public class PaperServiceImpl extends ServiceImpl<PaperMapper, Paper> implements
 
   @Override
   @Transactional(rollbackFor = Exception.class)
+  @Caching(evict = {
+      @CacheEvict(value = "paper", allEntries = true),
+      @CacheEvict(value = "popularPapers", allEntries = true),
+      @CacheEvict(value = "latestPapers", allEntries = true)
+  })
   public PaperDTO addPaper(PaperAddRequest request) {
     // 检查DOI是否已存在
     if (StringUtils.hasText(request.getDoi()) && existsByDoi(request.getDoi())) {
@@ -116,6 +126,11 @@ public class PaperServiceImpl extends ServiceImpl<PaperMapper, Paper> implements
 
   @Override
   @Transactional(rollbackFor = Exception.class)
+  @Caching(evict = {
+      @CacheEvict(value = "paper", key = "#paperId"),
+      @CacheEvict(value = "popularPapers", allEntries = true),
+      @CacheEvict(value = "latestPapers", allEntries = true)
+  })
   public PaperDTO updatePaper(Long paperId, PaperAddRequest request) {
     Paper existingPaper = getById(paperId);
     if (existingPaper == null) {
@@ -168,6 +183,11 @@ public class PaperServiceImpl extends ServiceImpl<PaperMapper, Paper> implements
 
   @Override
   @Transactional(rollbackFor = Exception.class)
+  @Caching(evict = {
+      @CacheEvict(value = "paper", key = "#paperId"),
+      @CacheEvict(value = "popularPapers", allEntries = true),
+      @CacheEvict(value = "latestPapers", allEntries = true)
+  })
   public Boolean deletePaper(Long paperId) {
     // 删除作者关系
     authorPaperMapper.deleteByPaperId(paperId);
@@ -194,11 +214,12 @@ public class PaperServiceImpl extends ServiceImpl<PaperMapper, Paper> implements
   }
 
   @Override
+  @Cacheable(value = "popularPapers", key = "#limit")
   public List<PaperDTO> getPopularPapers(Integer limit) {
     QueryWrapper<Paper> queryWrapper = new QueryWrapper<>();
     queryWrapper.orderByDesc("favorite_count");
     queryWrapper.last("LIMIT " + (limit != null ? limit : 10));
-    
+
     List<Paper> papers = paperMapper.selectList(queryWrapper);
     return papers.stream()
         .map(this::convertToDTO)
@@ -206,11 +227,12 @@ public class PaperServiceImpl extends ServiceImpl<PaperMapper, Paper> implements
   }
 
   @Override
+  @Cacheable(value = "latestPapers", key = "#limit")
   public List<PaperDTO> getLatestPapers(Integer limit) {
     QueryWrapper<Paper> queryWrapper = new QueryWrapper<>();
     queryWrapper.orderByDesc("updated");
     queryWrapper.last("LIMIT " + (limit != null ? limit : 10));
-    
+
     List<Paper> papers = paperMapper.selectList(queryWrapper);
     return papers.stream()
         .map(this::convertToDTO)

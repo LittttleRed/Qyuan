@@ -5,6 +5,7 @@ import com.example.qyuanpaperrd.dto.ClaimRequest;
 import com.example.qyuanpaperrd.common.Result;
 import com.example.qyuanpaperrd.common.PageResult;
 import com.example.qyuanpaperrd.service.UserInteractionService;
+import com.example.qyuanpaperrd.util.HeaderUtil;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -16,6 +17,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
@@ -27,7 +29,7 @@ import java.util.Map;
  */
 @Slf4j
 @RestController
-@RequestMapping("/api/v1/user")
+@RequestMapping("/paper/user")
 @RequiredArgsConstructor
 @Validated
 @Tag(name = "用户交互", description = "用户收藏、认领、历史记录等个人功能")
@@ -35,16 +37,15 @@ public class UserInteractionController {
 
     private final UserInteractionService userInteractionService;
 
-    @PostMapping("/{userId}/favorites/{paperId}")
-    @PreAuthorize("#userId == authentication.principal.id or hasRole('ADMIN')")
+    @PostMapping("/favorites/{paperId}")
     @Operation(summary = "收藏论文", description = "用户收藏指定论文")
     public ResponseEntity<Result<String>> favoritePaper(
-            @Parameter(description = "用户ID", required = true)
-            @PathVariable @NotNull Long userId,
-            
             @Parameter(description = "论文ID", required = true)
-            @PathVariable @NotNull Long paperId) {
+            @PathVariable @NotNull Long paperId,
+
+            HttpServletRequest request) {
         try {
+            Long userId = HeaderUtil.getUserId(request);
             userInteractionService.favoritePaper(userId, paperId);
             return ResponseEntity.ok(Result.success("收藏成功", "success"));
         } catch (Exception e) {
@@ -54,16 +55,15 @@ public class UserInteractionController {
         }
     }
 
-    @DeleteMapping("/{userId}/favorites/{paperId}")
-    @PreAuthorize("#userId == authentication.principal.id or hasRole('ADMIN')")
+    @DeleteMapping("/favorites/{paperId}")
     @Operation(summary = "取消收藏", description = "用户取消收藏论文")
     public ResponseEntity<Result<String>> unfavoritePaper(
-            @Parameter(description = "用户ID", required = true)
-            @PathVariable @NotNull Long userId,
-            
             @Parameter(description = "论文ID", required = true)
-            @PathVariable @NotNull Long paperId) {
+            @PathVariable @NotNull Long paperId,
+
+            HttpServletRequest request) {
         try {
+            Long userId = HeaderUtil.getUserId(request);
             userInteractionService.unfavoritePaper(userId, paperId);
             return ResponseEntity.ok(Result.success("取消收藏成功", "success"));
         } catch (Exception e) {
@@ -95,17 +95,16 @@ public class UserInteractionController {
         }
     }
 
-    @PostMapping("/{userId}/claims")
-    @PreAuthorize("#userId == authentication.principal.id or hasRole('ADMIN')")
+    @PostMapping("/claims")
     @Operation(summary = "认领论文", description = "用户认领自己的论文")
     public ResponseEntity<Result<String>> claimPaper(
-            @Parameter(description = "用户ID", required = true)
-            @PathVariable @NotNull Long userId,
-            
             @Parameter(description = "认领请求", required = true)
-            @Valid @RequestBody ClaimRequest request) {
+            @Valid @RequestBody ClaimRequest claimRequest,
+
+            HttpServletRequest request) {
         try {
-            userInteractionService.claimPaper(userId, request);
+            Long userId = HeaderUtil.getUserId(request);
+            userInteractionService.claimPaper(userId, claimRequest);
             return ResponseEntity.ok(Result.success("认领申请已提交", "success"));
         } catch (Exception e) {
             log.error("认领论文失败", e);
@@ -161,15 +160,15 @@ public class UserInteractionController {
         }
     }
 
-    @PostMapping("/{userId}/record-view/{paperId}")
+    @PostMapping("/record-view/{paperId}")
     @Operation(summary = "记录浏览", description = "记录用户浏览论文的行为")
     public ResponseEntity<Result<String>> recordView(
-            @Parameter(description = "用户ID", required = true)
-            @PathVariable @NotNull Long userId,
-            
             @Parameter(description = "论文ID", required = true)
-            @PathVariable @NotNull Long paperId) {
+            @PathVariable @NotNull Long paperId,
+
+            HttpServletRequest request) {
         try {
+            Long userId = HeaderUtil.getUserId(request);
             userInteractionService.recordView(userId, paperId);
             return ResponseEntity.ok(Result.success("浏览记录已保存", "success"));
         } catch (Exception e) {

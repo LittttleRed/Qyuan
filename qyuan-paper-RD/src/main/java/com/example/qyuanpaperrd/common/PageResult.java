@@ -56,6 +56,6 @@ public class PageResult<T> {
      * 创建空分页结果
      */
     public static <T> PageResult<T> empty(Long current, Long size) {
-        return new PageResult<>(null, 0L, current, size);
+        return new PageResult<>(java.util.Collections.emptyList(), 0L, current, size);
     }
 }
