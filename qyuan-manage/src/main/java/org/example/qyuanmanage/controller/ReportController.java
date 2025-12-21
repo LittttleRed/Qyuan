@@ -20,10 +20,10 @@ public class ReportController {
     public Result<Object> listReports(
             @RequestHeader("USER-ID") int user_id,
             @RequestParam("page_num") int page_num,
-            @RequestParam("page_size") int page_size) {
-
+            @RequestParam("page_size") int page_size,
+            @RequestParam(name="status", required = false) Integer status) {
         try {
-            IPage<Report> page = reportService.listReports(page_num, page_size);
+            IPage<Report> page = reportService.listReports(page_num, page_size,status);
             return Result.ok(page);
         } catch (Exception e) {
             return Result.fail(e.getMessage());
@@ -48,7 +48,6 @@ public class ReportController {
             @RequestParam Integer targetType,
             @RequestParam Long targetId,
             @RequestParam String reportReason,
-            @RequestParam(required = false) String reportUrl,
             @RequestParam(required = false) MultipartFile reportPicture
             ) {
         return Result.ok(reportService.createReport(

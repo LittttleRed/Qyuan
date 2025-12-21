@@ -35,7 +35,7 @@
 
         <mysql.verison>8.0.33</mysql.verison>
 
-        <lombok.version>1.18.26</lombok.version>
+        <lombok.version>1.18.30</lombok.version>
 
         <jackson-annotaion.version>2.15.1</jackson-annotaion.version>
 

@@ -47,7 +47,7 @@ public class ClaimServiceImpl extends ServiceImpl<ClaimMapper, Claim> implements
   private final AuthorPaperMapper authorPaperMapper;
   private final PaperService paperService;
   
-  @Autowired
+  @Resource
   private MinioService minioService;
 
   @Override

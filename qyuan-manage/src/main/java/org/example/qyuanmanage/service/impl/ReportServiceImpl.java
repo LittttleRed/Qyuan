@@ -1,5 +1,6 @@
 package org.example.qyuanmanage.service.impl;
 
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
@@ -19,9 +20,22 @@ public class ReportServiceImpl extends ServiceImpl<ReportMapper, Report> impleme
     @Resource
     private MinioService minioService;
 
+    @Resource
+    ReportMapper reportMapper;
+
     @Override
-    public IPage<Report> listReports(int page, int size) {
-        return this.page(new Page<>(page, size));
+    public IPage<Report> listReports(int page, int size, Integer status) {
+        // 方式2：明确创建 Page 对象
+        Page<Report> pageObj = new Page<>(page, size,true); // 第三个参数为是否查询总数
+
+        QueryWrapper<Report> queryWrapper = new QueryWrapper<>();
+        if (status != null) {
+            queryWrapper.eq("status", status);
+        }
+
+        // 使用 baseMapper 的分页查询
+        IPage<Report> result = reportMapper.selectPage(pageObj, queryWrapper);
+        return result;
     }
 
     @Override

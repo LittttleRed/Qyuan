@@ -6,6 +6,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDateTime;
 
+
 @FeignClient(name="qyuan-user",path = "/user/homepage")
 public interface UserAuthFeign {
 

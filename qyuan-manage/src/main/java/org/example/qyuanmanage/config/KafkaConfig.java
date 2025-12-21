@@ -1,4 +1,4 @@
-package org.example.qyuanorder.config;
+package org.example.qyuanmanage.config;
 
 import org.apache.kafka.clients.admin.AdminClientConfig;
 import org.apache.kafka.clients.admin.NewTopic;
@@ -14,17 +14,21 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.kafka.annotation.EnableKafka;
 import org.springframework.kafka.config.TopicBuilder;
-import org.springframework.kafka.core.*;
+import org.springframework.kafka.core.DefaultKafkaProducerFactory;
+import org.springframework.kafka.core.KafkaAdmin;
+import org.springframework.kafka.core.KafkaTemplate;
+import org.springframework.kafka.core.ProducerFactory;
 import org.springframework.kafka.support.ProducerListener;
 import org.springframework.kafka.support.serializer.JsonSerializer;
-import org.springframework.kafka.transaction.KafkaTransactionManager;
 import org.springframework.lang.Nullable;
 
 import java.util.HashMap;
 import java.util.Map;
 
 /**
- * @description: Kafka配置
+ * @description:
+ * @author: 29177
+ * @time: 2025/12/21 17:44
  */
 @Configuration
 @EnableKafka
@@ -35,8 +39,8 @@ public class KafkaConfig {
     @Value("${spring.kafka.bootstrap-servers}")
     private String bootstrapServers;
 
-    @Value("${spring.kafka.topics.message-buy-vip:message-buy-vip-topic}")
-    private String buyVIPTopic;
+    @Value("${spring.kafka.topics.message-audit:message-audit-topic}")
+    private String auditTopic;
 
     // ==================== KafkaAdmin 配置 ====================
     @Bean
@@ -52,7 +56,7 @@ public class KafkaConfig {
     // ==================== 主题配置 ====================
     @Bean
     public NewTopic buyVIPTopic() {
-        return TopicBuilder.name(buyVIPTopic)
+        return TopicBuilder.name(auditTopic)
                 .partitions(3)
                 .replicas(1)
                 .config(TopicConfig.RETENTION_MS_CONFIG, "604800000")

@@ -6,6 +6,7 @@ import com.baomidou.mybatisplus.extension.plugins.inner.PaginationInnerIntercept
 import org.mybatis.spring.annotation.MapperScan;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.cloud.client.discovery.EnableDiscoveryClient;
 import org.springframework.context.annotation.Bean;
 
 /**
@@ -14,6 +15,7 @@ import org.springframework.context.annotation.Bean;
  * @author Qyuan
  */
 @SpringBootApplication
+@EnableDiscoveryClient
 public class QyuanReadNotesApplication {
 
     public static void main(String[] args) {

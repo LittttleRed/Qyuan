@@ -6,7 +6,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 public interface ReportService {
 
-    IPage<Report> listReports(int page, int size);
+    IPage<Report> listReports(int page, int size,Integer status);
 
     Report getReportById(Long id);
 

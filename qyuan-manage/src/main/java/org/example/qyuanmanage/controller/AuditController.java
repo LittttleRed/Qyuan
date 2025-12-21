@@ -38,14 +38,13 @@ public class AuditController {
         }
     }
 
-    @PostMapping("/{adminId}/report")
+    @PostMapping("/report")
     public Result<Object> auditReport(@RequestHeader("USER-ID") Long adminId,
                                       @RequestBody JSONObject body) {
         try {
             Long reportId = body.getLong("reportId");
             Integer result = body.getInteger("result");
             String opinion = body.getString("opinion"); // optional
-
             AuditResult ar = auditService.auditReport(adminId, reportId, result, opinion);
             return Result.ok(ar);
         } catch (Exception e) {

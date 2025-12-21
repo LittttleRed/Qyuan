@@ -10,10 +10,13 @@ import org.example.qyuanmanage.entity.Report;
 import org.example.qyuanmanage.mapper.AuditResultMapper;
 import org.example.qyuanmanage.mapper.ReportMapper;
 import org.example.qyuanmanage.service.AuditService;
+import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.HashMap;
+import java.util.Map;
 
 @Service
 public class AuditServiceImpl
@@ -23,6 +26,8 @@ public class AuditServiceImpl
     @Resource
     ReportMapper reportMapper;
 
+    @Resource
+    KafkaTemplate<String,Object> kafkaTemplate;
     @Override
     public IPage<AuditResult> listAudits(int page, int size) {
         return this.page(new Page<>(page, size));
@@ -57,6 +62,18 @@ public class AuditServiceImpl
         ar.setAuditOpinion(opinion);
         ar.setAuditTime(LocalDateTime.now());
         this.save(ar);
+
+        Map<String,String> message = new HashMap<>();
+        String content=String.format("您举报的类型为 %s ,原因为 %s 的对象已处理,结果为%s",
+                switch (rep.getTargetType()){
+                    case 1 -> "论文";
+                    case 2 -> "用户";
+                    default -> "未知";
+                },rep.getReportReason(),ar.getAuditOpinion());
+        message.put("title","举报结果处理结果通知");
+        message.put("content", content);
+        message.put("userId",String.valueOf(rep.getUserId()));
+        kafkaTemplate.send("message-audit-topic", message);
 
         // 同步更新举报状态
         rep.setStatus(result == 2 ? 2 : 1);

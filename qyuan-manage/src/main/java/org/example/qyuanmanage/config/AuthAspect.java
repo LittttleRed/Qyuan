@@ -39,12 +39,12 @@ public class AuthAspect {
             if ("user_id".equals(paramNames[i]) || "userId".equals(paramNames[i])) {
                 Integer userId =(Integer) args[i];
                 log.info("user_id = "+ userId);
-                Result result=userAuthFeign.authRoot(userId);
-                JSONObject jsonObject=(JSONObject)result.getData();
-                Integer permission_level=jsonObject.getInteger("permission_level");
-                if(permission_level!=3){
-                    throw new RuntimeException();
-                }
+//                Result result=userAuthFeign.authRoot(userId);
+//                JSONObject jsonObject=(JSONObject)result.getData();
+//                Integer permission_level=jsonObject.getInteger("permission_level");
+//                if(permission_level!=3){
+//                    throw new RuntimeException();
+//                }
                 break;
             }
         }
