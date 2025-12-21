@@ -1,43 +1,56 @@
 package org.example.qyuanmanage.controller;
 
+import com.alibaba.fastjson2.JSONObject;
+import com.baomidou.mybatisplus.core.metadata.IPage;
 import jakarta.annotation.Resource;
 import org.example.qyuancommon.Result;
+import org.example.qyuanmanage.entity.AuditResult;
 import org.example.qyuanmanage.service.AuditService;
 import org.springframework.web.bind.annotation.*;
 
+
 @RestController
-@RequestMapping("/audit")
+@RequestMapping("/manage/audit")
 public class AuditController {
 
     @Resource
     private AuditService auditService;
 
-    @GetMapping("/auditList")
-    public Result<Object> listAudits(
-            @RequestParam(defaultValue = "1") int page,
-            @RequestParam(defaultValue = "10") int size) {
-
-        return Result.ok(auditService.listAudits(page, size));
+    @GetMapping("/list")
+    public Result<Object> listAudits(@RequestHeader("USER-ID") int user_id,
+                                     @RequestParam("page_num") int pageNum,
+                                     @RequestParam("page_size") int pageSize) {
+        try {
+            IPage<AuditResult> page = auditService.listAudits(pageNum, pageSize);
+            return Result.ok(page);
+        } catch (Exception e) {
+            return Result.fail(e.getMessage());
+        }
     }
 
-    @GetMapping("/getAudit/{id}")
-    public Result<Object> getAudit(@PathVariable Long id) {
-        return Result.ok(auditService.getAuditById(id));
+    @GetMapping("/{auditId}")
+    public Result<Object> getAudit(@PathVariable("auditId") Long auditId) {
+        try {
+            AuditResult ar = auditService.getAuditById(auditId);
+            return Result.ok(ar);
+        } catch (Exception e) {
+            return Result.fail(e.getMessage());
+        }
     }
 
-    @PostMapping("/auditReport")
-    public Result<Object> auditReport(
-            @RequestHeader("USER-ID") int user_id,
-            @RequestParam Long reportId,
-            @RequestParam Integer result,
-            @RequestParam(required = false) String opinion) {
+    @PostMapping("/{adminId}/report")
+    public Result<Object> auditReport(@RequestHeader("USER-ID") Long adminId,
+                                      @RequestBody JSONObject body) {
+        try {
+            Long reportId = body.getLong("reportId");
+            Integer result = body.getInteger("result");
+            String opinion = body.getString("opinion"); // optional
 
-        return Result.ok(
-                auditService.auditReport(adminId, reportId, result, opinion)
-        );
+            AuditResult ar = auditService.auditReport(adminId, reportId, result, opinion);
+            return Result.ok(ar);
+        } catch (Exception e) {
+            return Result.fail(e.getMessage());
+        }
     }
 }
-
-// token: get userid
-//
 

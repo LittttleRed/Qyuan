@@ -2,6 +2,7 @@ package org.example.qyuanmanage.service;
 
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import org.example.qyuanmanage.entity.Report;
+import org.springframework.web.multipart.MultipartFile;
 
 public interface ReportService {
 
@@ -10,5 +11,5 @@ public interface ReportService {
     Report getReportById(Long id);
 
     Report createReport(Long userId, Integer targetType, Long targetId,
-                        String reportReason, String reportUrl);
+                        String reportReason, MultipartFile reportPicture);
 }
