@@ -1,5 +1,6 @@
 package com.example.qyuanpaperrd.common;
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 
 import java.io.Serial;
@@ -9,6 +10,7 @@ import java.io.Serializable;
  * 统一响应结果类
  */
 @Data
+@Schema(description = "统一响应结果")
 public class Result<T> implements Serializable {
 
     @Serial
@@ -17,21 +19,25 @@ public class Result<T> implements Serializable {
     /**
      * 响应码
      */
+    @Schema(description = "响应码", example = "200")
     private Integer code;
 
     /**
      * 响应消息
      */
+    @Schema(description = "响应消息", example = "操作成功")
     private String message;
 
     /**
      * 响应数据
      */
+    @Schema(description = "响应数据")
     private T data;
 
     /**
      * 时间戳
      */
+    @Schema(description = "时间戳", example = "1703001234567")
     private Long timestamp;
 
     public Result() {

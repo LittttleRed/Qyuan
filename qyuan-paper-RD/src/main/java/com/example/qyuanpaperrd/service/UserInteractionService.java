@@ -1,30 +1,15 @@
 package com.example.qyuanpaperrd.service;
 
 import com.example.qyuanpaperrd.dto.ClaimRequest;
-import com.example.qyuanpaperrd.dto.PaperDTO;
 import com.example.qyuanpaperrd.common.PageResult;
+import com.example.qyuanpaperrd.entity.Claim;
 
-import java.util.Map;
+import java.util.ArrayList;
 
 /**
  * 用户交互服务接口 - 用户个人功能
  */
 public interface UserInteractionService {
-
-    /**
-     * 收藏论文
-     */
-    void favoritePaper(Long userId, Long paperId);
-
-    /**
-     * 取消收藏
-     */
-    void unfavoritePaper(Long userId, Long paperId);
-
-    /**
-     * 获取用户收藏列表
-     */
-    PageResult<PaperDTO> getUserFavorites(Long userId, Integer page, Integer size);
 
     /**
      * 认领论文
@@ -36,19 +21,6 @@ public interface UserInteractionService {
      */
     PageResult<Object> getUserClaims(Long userId, Integer status, Integer page, Integer size);
 
-    /**
-     * 获取用户浏览历史
-     */
-    PageResult<PaperDTO> getUserHistory(Long userId, Integer page, Integer size);
-
-    /**
-     * 记录浏览行为
-     */
-    void recordView(Long userId, Long paperId);
-
-    /**
-     * 获取用户档案
-     */
-    Map<String, Object> getUserProfile(Long userId);
+    void genClaim(Long userId, Long paperId, String claimPicture);
 }
 

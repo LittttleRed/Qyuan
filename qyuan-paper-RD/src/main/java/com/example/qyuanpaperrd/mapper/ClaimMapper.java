@@ -4,8 +4,7 @@ import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.example.qyuanpaperrd.entity.Claim;
-import org.apache.ibatis.annotations.Mapper;
-import org.apache.ibatis.annotations.Param;
+import org.apache.ibatis.annotations.*;
 
 import java.util.List;
 
@@ -33,6 +32,7 @@ public interface ClaimMapper extends BaseMapper<Claim> {
     /**
      * 查询用户对特定论文的认领记录
      */
+    @Select("select * from claim where user_id = #{userId} and paper_id = #{paperId}")
     Claim selectByUserIdAndPaperId(@Param("userId") Long userId, @Param("paperId") Long paperId);
 
     /**
@@ -48,5 +48,9 @@ public interface ClaimMapper extends BaseMapper<Claim> {
     /**
      * 更新认领状态
      */
+    @Update("update claim set status = #{status} where claim_id = #{claimId}")
     int updateStatus(@Param("claimId") Long claimId, @Param("status") Integer status);
+
+
+
 }

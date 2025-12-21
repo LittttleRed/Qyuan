@@ -4,7 +4,6 @@ spring:
 server:
   port: 9000
 
-# 华为云 OBS 配置
 huawei:
   obs:
     enabled: true

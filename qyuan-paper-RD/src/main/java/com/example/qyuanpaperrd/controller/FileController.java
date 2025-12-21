@@ -2,6 +2,8 @@ package com.example.qyuanpaperrd.controller;
 
 import com.example.qyuanpaperrd.service.HuaweiObsService;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -19,7 +21,7 @@ import java.util.Map;
  */
 @Slf4j
 @RestController
-@RequestMapping("/api/files")
+@RequestMapping("/paper/files")
 @RequiredArgsConstructor
 @Tag(name = "文件管理", description = "文件上传下载管理接口")
 @ConditionalOnProperty(prefix = "huawei.obs", name = "enabled", havingValue = "true", matchIfMissing = false)
@@ -45,6 +47,11 @@ public class FileController {
 
     @PostMapping("/upload")
     @Operation(summary = "上传文件", description = "上传文件到华为云 OBS")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "文件上传成功"),
+        @ApiResponse(responseCode = "400", description = "参数错误"),
+        @ApiResponse(responseCode = "500", description = "文件上传失败")
+    })
     public ResponseEntity<Map<String, String>> uploadFile(
             @RequestParam("file") MultipartFile file,
             @RequestParam(value = "folder", required = false, defaultValue = "papers") String folder) {
@@ -78,6 +85,10 @@ public class FileController {
 
     @GetMapping("/url/{objectKey}")
     @Operation(summary = "获取文件访问链接", description = "获取文件的预签名访问链接")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "获取成功"),
+        @ApiResponse(responseCode = "500", description = "获取文件URL失败")
+    })
     public ResponseEntity<Map<String, String>> getFileUrl(@PathVariable String objectKey) {
         try {
             String url = obsService.getPresignedUrl(objectKey);
@@ -93,6 +104,10 @@ public class FileController {
 
     @DeleteMapping("/{objectKey}")
     @Operation(summary = "删除文件", description = "从华为云 OBS 删除文件")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "文件删除成功"),
+        @ApiResponse(responseCode = "500", description = "删除文件失败")
+    })
     public ResponseEntity<Map<String, String>> deleteFile(@PathVariable String objectKey) {
         try {
             obsService.deleteFile(objectKey);
@@ -108,6 +123,10 @@ public class FileController {
 
     @GetMapping("/exists/{objectKey}")
     @Operation(summary = "检查文件是否存在", description = "检查文件是否存在于华为云 OBS")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "检查成功"),
+        @ApiResponse(responseCode = "500", description = "检查文件失败")
+    })
     public ResponseEntity<Map<String, Object>> checkFileExists(@PathVariable String objectKey) {
         try {
             boolean exists = obsService.doesObjectExist(objectKey);

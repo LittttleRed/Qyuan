@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.example.qyuanpaperrd.entity.AuthorPaper;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
+import org.apache.ibatis.annotations.Select;
 
 import java.util.List;
 
@@ -43,6 +44,14 @@ public interface AuthorPaperMapper extends BaseMapper<AuthorPaper> {
      */
     int deleteByPaperId(@Param("paperId") Long paperId);
 
+
+    @Select("SELECT * FROM author_paper \n" +
+            "WHERE author_last_name = #{lastName} \n" +
+            "  AND author_first_name = #{firstName}\n" +
+            "UNION\n" +
+            "SELECT * FROM author_paper \n" +
+            "WHERE author_orcid = #{orcid}")
+    List<AuthorPaper> genClaims(@Param("orcid") String orcid,@Param("firstName") String firstName, @Param("lastName") String lastName);
     /**
      * 获取论文作者信息（为了兼容测试）
      */

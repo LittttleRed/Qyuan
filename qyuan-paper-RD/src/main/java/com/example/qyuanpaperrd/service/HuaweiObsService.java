@@ -16,7 +16,21 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.UnsupportedEncodingException;
+import java.net.URL;
+import java.net.URLEncoder;
+import java.security.InvalidKeyException;
+import java.security.NoSuchAlgorithmException;
+import java.util.Base64;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.Locale;
+import java.util.Map;
+import java.util.TreeMap;
 import java.util.UUID;
+import java.util.concurrent.TimeUnit;
+import javax.crypto.Mac;
+import javax.crypto.spec.SecretKeySpec;
 
 import com.example.qyuanpaperrd.config.HuaweiObsProperties;
 
@@ -86,8 +100,7 @@ public class HuaweiObsService {
   }
 
   /**
-   * 获取文件预签名 URL（使用简化方式：直接拼接公共 URL）
-   * 注意：如果 bucket 是私有的，需要使用临时授权或预签名 URL
+   * 获取文件预签名 URL（用于私有桶）
    *
    * @param objectKey 对象键
    * @return 文件访问 URL
@@ -97,7 +110,7 @@ public class HuaweiObsService {
   }
 
   /**
-   * 获取文件预签名 URL
+   * 获取文件预签名 URL（用于私有桶）
    *
    * @param objectKey         对象键
    * @param expirationMinutes 过期时间（分钟）
@@ -105,19 +118,125 @@ public class HuaweiObsService {
    */
   public String getPresignedUrl(String objectKey, long expirationMinutes) {
     try {
-      // 构建公共访问 URL（如果 bucket 是公共读）
-      String url = String.format("https://%s.%s/%s",
-          obsProperties.getBucketName(),
-          obsProperties.getEndpoint(),
-          objectKey);
+      log.info("生成预签名 URL: bucket={}, objectKey={}, expiration={}min",
+          obsProperties.getBucketName(), objectKey, expirationMinutes);
 
-      log.info("生成文件访问 URL: {}", url);
+      // 计算过期时间戳（秒）
+      long expires = (System.currentTimeMillis() + TimeUnit.MINUTES.toMillis(expirationMinutes)) / 1000;
+
+      // 构造请求头和查询参数
+      Map<String, String[]> headers = new HashMap<>();
+      Map<String, String> queries = new HashMap<>();
+
+      // 手动计算签名
+
+      String signature = querySignature("GET", headers, queries,
+          obsProperties.getBucketName(), objectKey, expires);
+
+      // 构造URL
+      String url = getPresignedUrl(signature, expires, objectKey);
+
+      log.info("预签名 URL 生成成功: objectKey={}, expiration={}min", objectKey, expirationMinutes);
       return url;
 
     } catch (Exception e) {
-      log.error("生成文件 URL 失败", e);
-      throw new RuntimeException("生成文件 URL 失败: " + e.getMessage(), e);
+      log.error("生成预签名 URL 时发生未知错误: objectKey={}", objectKey, e);
+      throw new RuntimeException("生成预签名 URL 失败: " + e.getMessage(), e);
     }
+  }
+
+  /**
+   * 手动计算OBS签名
+   */
+  private String querySignature(String httpMethod, Map<String, String[]> headers,
+      Map<String, String> queries, String bucketName, String objectName, long expires)
+      throws NoSuchAlgorithmException, InvalidKeyException, UnsupportedEncodingException {
+    objectName=getFileName(objectName)+"/"+objectName+".pdf";
+
+    final String SIGN_SEP = "\n";
+    final String OBS_PREFIX = "x-obs-";
+    final String DEFAULT_ENCODING = "UTF-8";
+
+    String contentMd5 = "";
+    String contentType = "";
+
+    // 构造StringToSign
+    StringBuilder stringToSign = new StringBuilder();
+    stringToSign.append(httpMethod).append(SIGN_SEP)
+            .append(contentMd5).append(SIGN_SEP)
+            .append(contentType).append(SIGN_SEP)
+            .append(expires).append(SIGN_SEP);
+
+    // 构造CanonicalizedResource
+    stringToSign.append("/");
+    if (bucketName != null && !bucketName.isEmpty()) {
+      stringToSign.append(bucketName).append("/");
+      if (objectName != null && !objectName.isEmpty()) {
+        stringToSign.append(encodeObjectName(objectName));
+      }
+    }
+
+    // 计算签名
+    String stringToSignStr = stringToSign.toString();
+    SecretKeySpec signingKey = new SecretKeySpec(obsProperties.getSecretAccessKey().getBytes(DEFAULT_ENCODING), "HmacSHA1");
+    Mac mac = Mac.getInstance("HmacSHA1");
+    mac.init(signingKey);
+    byte[] signBytes = mac.doFinal(stringToSignStr.getBytes(DEFAULT_ENCODING));
+
+    return Base64.getEncoder().encodeToString(signBytes);
+  }
+
+  /**
+   * URL编码对象名称
+   */
+  private String encodeObjectName(String objectName) throws UnsupportedEncodingException {
+    final String DEFAULT_ENCODING = "UTF-8";
+    StringBuilder result = new StringBuilder();
+    String[] tokens = objectName.split("/");
+    for (int i = 0; i < tokens.length; i++) {
+      result.append(URLEncoder.encode(tokens[i], DEFAULT_ENCODING)
+          .replaceAll("\\+", "%20")
+          .replaceAll("\\*", "%2A")
+          .replaceAll("%7E", "~"));
+      if (i < tokens.length - 1) {
+        result.append("/");
+      }
+    }
+    return result.toString();
+  }
+
+  /**
+   * 构造预签名URL
+   */
+  private String getPresignedUrl(String signature, long expires, String objectName)
+      throws UnsupportedEncodingException {
+    StringBuilder url = new StringBuilder();
+
+
+    // 构造基础URL：https://bucket.endpoint/objectKey
+    url.append("https://").append(obsProperties.getBucketName())
+        .append(".").append(extractDomainFromEndpoint(obsProperties.getEndpoint()))
+            .append("/").append(getFileName(objectName))
+        .append("/").append(encodeObjectName(objectName)).append(".pdf").append("?");
+
+    // 添加查询参数
+    url.append("AccessKeyId=").append(URLEncoder.encode(obsProperties.getAccessKey(), "UTF-8"))
+        .append("&Expires=").append(expires)
+        .append("&Signature=").append(URLEncoder.encode(signature, "UTF-8"));
+
+    return url.toString();
+  }
+
+  /**
+   * 从endpoint中提取域名部分
+   */
+  private String extractDomainFromEndpoint(String endpoint) {
+    // 如果endpoint已经是域名格式，直接返回
+    if (endpoint.startsWith("obs.") && endpoint.endsWith(".myhuaweicloud.com")) {
+      return endpoint;
+    }
+    // 否则直接返回原值
+    return endpoint;
   }
 
   /**
@@ -230,5 +349,13 @@ public class HuaweiObsService {
       log.error("下载文件时发生未知错误", e);
       throw new RuntimeException("下载文件失败: " + e.getMessage(), e);
     }
+  }
+
+  public String getFileName(String objectKey) {
+    String fileName =objectKey.split("\\.")[0];
+    if(fileName.equals(objectKey)) {
+      fileName = objectKey.split("/")[0];
+    }
+    return fileName;
   }
 }
