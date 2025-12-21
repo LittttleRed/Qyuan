@@ -26,9 +26,7 @@ import java.util.concurrent.TimeUnit;
 @RequiredArgsConstructor
 @ConditionalOnProperty(prefix = "minio", name = "endpoint")
 public class MinioService {
-
     private final MinioProperties minioProperties;
-
     /**
      * 上传文件到 MinIO
      *
