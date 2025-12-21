@@ -84,7 +84,6 @@ public class MinioService {
 
     /**
      * 获取文件的永久公开 URL（适用于公开桶）
-     *
      * @param objectKey 对象键
      * @return 文件访问 URL
      */
