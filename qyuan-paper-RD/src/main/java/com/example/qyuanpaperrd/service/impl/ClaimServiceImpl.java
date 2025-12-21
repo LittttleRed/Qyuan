@@ -153,7 +153,7 @@ public class ClaimServiceImpl extends ServiceImpl<ClaimMapper, Claim> implements
 
   @Override
   public PageResult<Claim> getAllClaims(Integer page, Integer size,Integer status) {
-    Page<Claim> pageInfo = claimMapper.selectPage(new Page<>(page, size), new QueryWrapper<Claim>().eq("status",status));
+    Page<Claim> pageInfo = claimMapper.selectPage(new Page<>(page, size), status!=null?new QueryWrapper<Claim>().eq("status",status): null);
     return  PageResult.of(
           pageInfo.getRecords(),
             pageInfo.getTotal(),
