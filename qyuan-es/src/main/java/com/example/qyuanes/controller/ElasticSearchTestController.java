@@ -70,8 +70,8 @@ public Result<PaperSearchResponse> advancedSearchByGet(
         @RequestParam(required = false) List<Integer> categoryIds,
         @RequestParam(required = false) String submitter,
         @RequestParam(required = false) String journalSource,
-        @RequestParam(required = false) String startTime,
-        @RequestParam(required = false) String endTime,
+        @RequestParam(required = false) OffsetDateTime startTime,
+        @RequestParam(required = false) OffsetDateTime endTime,
         @RequestParam(required = false) Integer minReadCount,
         @RequestParam(required = false) Integer maxReadCount,
         @RequestParam(required = false) Integer minFavoriteCount,
@@ -88,6 +88,8 @@ public Result<PaperSearchResponse> advancedSearchByGet(
     request.setCategoryIds(categoryIds);
     request.setSubmitter(submitter);
     request.setJournalSource(journalSource);
+    request.setStartTime(startTime);
+    request.setEndTime(endTime);
     request.setMinReadCount(minReadCount);
     request.setMaxReadCount(maxReadCount);
     request.setMinFavoriteCount(minFavoriteCount);
@@ -97,21 +99,7 @@ public Result<PaperSearchResponse> advancedSearchByGet(
     request.setSortField(sortField);
     request.setSortOrder(sortOrder);
     
-    // 解析时间字符串
-    if (StringUtils.hasText(startTime)) {
-        try {
-            request.setStartTime(OffsetDateTime.parse(startTime));
-        } catch (Exception e) {
-            return Result.fail("开始时间格式错误，请使用ISO-8601格式");
-        }
-    }
-    if (StringUtils.hasText(endTime)) {
-        try {
-            request.setEndTime(OffsetDateTime.parse(endTime));
-        } catch (Exception e) {
-            return Result.fail("结束时间格式错误，请使用ISO-8601格式");
-        }
-    }
+
     
     PaperSearchResponse response = elasticSearchService.searchPapers(request);
     return Result.ok(response, "搜索成功");

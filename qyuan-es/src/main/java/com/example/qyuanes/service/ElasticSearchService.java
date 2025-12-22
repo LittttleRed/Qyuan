@@ -76,13 +76,18 @@ public PaperSearchResponse searchPapers(PaperSearchRequest request) {
             .from(request.getPage() * request.getSize())          // 分页起始位置（跳过前面的记录）
             .size(request.getSize())                               // 每页大小
             .sort(sortOptions)                                     // 排序
+            .trackTotalHits(th -> th.enabled(true))                // 启用精确的total计数，不受10000条限制
             , Paper.class);                                        // 指定返回类型为Paper
         
         // ========== 5. 处理搜索结果 ==========
         return buildSearchResponse(response, request);
         
     } catch (IOException e) {
-        log.error("搜索论文失败: {}", e.getMessage(), e);
+        log.error("搜索论文失败，请求参数: {}, 错误信息: {}", request, e.getMessage(), e);
+        // 返回空结果，而不是抛出异常
+        return buildEmptyResponse(request);
+    } catch (Exception e) {
+        log.error("搜索论文时发生未知错误，请求参数: {}, 错误信息: {}", request, e.getMessage(), e);
         // 返回空结果，而不是抛出异常
         return buildEmptyResponse(request);
     }
