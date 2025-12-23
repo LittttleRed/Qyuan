@@ -10,4 +10,9 @@ public class SetNewEmailDTO {
     public boolean isFull() {
         return email != null && captcha != null;
     }
+
+    public boolean isEmailValid(){
+        return email.matches("^[a-zA-Z0-9_-]+@[a-zA-Z0-9_-]+(\\.[a-zA-Z0-9_-]+)+$");
+    }
+    
 }

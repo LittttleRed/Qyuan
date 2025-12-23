@@ -1,9 +1,9 @@
 package org.example.qyuanuser.controller;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-
 import org.example.qyuancommon.Result;
 import org.example.qyuanuser.DTO.auth.*;
 import org.example.qyuanuser.Result.*;
@@ -60,12 +60,13 @@ public class AuthController {
     }
 
     @PostMapping("/captcha")
-    public Result<Object> sendCaptcha(@RequestBody SendCaptchaDTO sendCaptchaDTO) {
+    public Result<Object> sendCaptcha(@RequestBody SendCaptchaDTO sendCaptchaDTO, @RequestHeader ("USER-ID") int user_id) {
         try {
-            if(userAuthService.sendCaptcha(sendCaptchaDTO)){
+            CommonResult result = userAuthService.sendCaptcha(sendCaptchaDTO, user_id);
+            if(result.isSuccess()){
                 return Result.ok();
             } else {
-                return Result.fail();
+                return Result.fail(result.getMessage());
             }
         } catch (Exception e) {
             return Result.fail(e.getMessage());
