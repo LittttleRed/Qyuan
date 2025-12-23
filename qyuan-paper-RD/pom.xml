@@ -91,6 +91,12 @@
     </dependency>
 
     <dependency>
+      <groupId>com.fasterxml.jackson.datatype</groupId>
+      <artifactId>jackson-datatype-jsr310</artifactId>
+      <version>2.15.2</version> <!-- 使用与你的Jackson兼容的版本 -->
+    </dependency>
+
+    <dependency>
       <groupId>com.alibaba.fastjson2</groupId>
       <artifactId>fastjson2</artifactId>
     </dependency>

@@ -1,4 +1,4 @@
-package com.example.qyuanpaperrd.config;
+package org.example.qyuanorder.config;
 
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
@@ -16,6 +16,7 @@ import org.springframework.data.redis.cache.RedisCacheManager;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.serializer.GenericJackson2JsonRedisSerializer;
+import org.springframework.data.redis.serializer.Jackson2JsonRedisSerializer;
 import org.springframework.data.redis.serializer.RedisSerializationContext;
 import org.springframework.data.redis.serializer.StringRedisSerializer;
 
@@ -24,9 +25,10 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 
 /**
- * Redis配置类
+ * @description:
+ * @author: 29177
+ * @time: 2025/12/23 18:21
  */
-
 @Configuration
 @EnableCaching
 public class RedisConfig {
@@ -51,11 +53,12 @@ public class RedisConfig {
         objectMapper.registerModule(javaTimeModule);
         objectMapper.setVisibility(PropertyAccessor.ALL, JsonAutoDetect.Visibility.ANY);
 
-        objectMapper.activateDefaultTyping(
-                objectMapper.getPolymorphicTypeValidator(),
-                ObjectMapper.DefaultTyping.NON_FINAL,
-                JsonTypeInfo.As.PROPERTY
-        );
+        // 移除多态类型处理，避免在序列化时添加类型信息
+        // objectMapper.activateDefaultTyping(
+        //         objectMapper.getPolymorphicTypeValidator(),
+        //         ObjectMapper.DefaultTyping.NON_FINAL,
+        //         JsonTypeInfo.As.PROPERTY);
+
         objectMapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
 
         return objectMapper;

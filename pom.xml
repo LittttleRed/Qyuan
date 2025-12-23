@@ -18,6 +18,7 @@
         <module>qyuan-read-notes</module>
         <module>qyuan-paper-RD</module>
         <module>qyuan-social</module>
+        <module>qyuan-es</module>
     </modules>
 
     <properties>

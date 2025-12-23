@@ -2,7 +2,7 @@ spring:
   profiles:
     active: dev
 server:
-  port: 9000
+  port: 9005
 
 ---
 # development environment

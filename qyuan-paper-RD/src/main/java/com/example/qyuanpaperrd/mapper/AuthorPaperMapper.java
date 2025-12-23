@@ -17,6 +17,7 @@ public interface AuthorPaperMapper extends BaseMapper<AuthorPaper> {
     /**
      * 根据论文ID获取作者列表
      */
+    @Select("SELECT * FROM author_paper WHERE paper_id = #{paperId}")
     List<AuthorPaper> selectByPaperId(@Param("paperId") Long paperId);
 
     /**

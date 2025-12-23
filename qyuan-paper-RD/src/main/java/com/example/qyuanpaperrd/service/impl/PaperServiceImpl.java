@@ -1,5 +1,7 @@
 package com.example.qyuanpaperrd.service.impl;
 
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -360,10 +362,13 @@ public class PaperServiceImpl extends ServiceImpl<PaperMapper, Paper> implements
             CitationDTO citation = new CitationDTO();
             citation.setCitationId(ref.getId());
             citation.setCitedPaperId(ref.getPaperId());
-            citation.setCitedPaperTitle(getPaperTitle(ref.getPaperId()));
+            citation.setCitedPaperTitle(ref.getRefTitle());
             citation.setCitedPaperYear(String.valueOf(getPaperYear(ref.getPaperId())));
             citation.setCitedPaperAuthors(getPaperAuthors(ref.getPaperId()));
             citation.setCitedPaperJournal(getPaperJournal(ref.getPaperId()));
+            citation.setCreatedAt(LocalDateTime.of(ref.getUpdated(), 1, 1, 0, 0, 0));
+            citation.setUrl(ref.getUrl());
+            citation.setBeRefedCount(ref.getBeRefedCount());
             return citation;
           })
           .collect(Collectors.toList());

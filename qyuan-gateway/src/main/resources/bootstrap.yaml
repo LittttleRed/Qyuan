@@ -2,7 +2,7 @@ spring:
   profiles:
     active: dev
 server:
-  port: 9000
+  port: 9999
 
 ---
 # development environment
@@ -12,7 +12,7 @@ spring:
       on-profile: dev
     import: file:.env.dev.properties
   application:
-    name: qyuan-gateway
+    name: gateway
   cloud:
     nacos:
       discovery:
@@ -29,3 +29,56 @@ spring:
         timeout: 10000
         username: nacos
         password: QianYuanWanMa_18
+    gateway:
+      discovery:
+        locator:
+          enabled: true
+          lower-case-service-id: false
+      routes:
+        - id: user-service-route
+          uri: lb://qyuan-user
+          predicates:
+            - Path=/user/**
+
+        - id: read-notes-service-route
+          uri: lb://qyuan-read-notes
+          predicates:
+            - Path=/read_notes/**
+
+        - id: social-service-route
+          uri: lb://qyuan-social
+          predicates:
+            - Path=/social/**
+
+        - id: es-service-route
+          uri: lb://qyuan-es
+          predicates:
+            - Path=/es/**
+
+        - id: paper-rd-service-route
+          uri: lb://qyuan-paper-RD
+          predicates:
+            - Path=/paper/**
+
+        - id: manage-service-route
+          uri: lb://qyuan-manage
+          predicates:
+            - Path=/manage/**
+
+        - id: order-service-route
+          uri: lb://qyuan-order
+          predicates:
+            - Path=/order/**
+
+demo:
+  gateway:
+    auth:
+      exclude-method-paths:
+        - method: GET
+          paths:
+            # product 相关路径
+            - /**
+        - method: POST
+          paths:
+            # user 相关路径
+            - /**

@@ -1,5 +1,6 @@
 package com.example.qyuanpaperrd.dto;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.Data;
 
 import java.time.LocalDateTime;
@@ -64,6 +65,7 @@ public class PaperDTO {
     /**
      * 更新时间
      */
+
     private LocalDateTime updated;
 
     /**

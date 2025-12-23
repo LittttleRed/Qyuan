@@ -48,4 +48,10 @@ public class CitationDTO {
 
     @Schema(description = "创建时间", example = "2023-06-15T10:30:00")
     private LocalDateTime createdAt;
+
+    @Schema(description = "被引用次数", example = "0")
+    private Integer beRefedCount;
+
+    @Schema(description = "引用来源", example = "https://www.example.com/paper/1")
+    private String url;
 }
