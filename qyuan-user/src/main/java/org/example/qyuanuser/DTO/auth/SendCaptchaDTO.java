@@ -10,4 +10,8 @@ public class SendCaptchaDTO {
     public boolean isFull() {
         return email != null && scene != null;
     }
+
+    public boolean isEmailValid() {
+        return email != null && email.matches("^[a-zA-Z0-9_-]+@[a-zA-Z0-9_-]+(\\.[a-zA-Z0-9_-]+)+$");
+    }
 }

@@ -1,9 +1,9 @@
 package org.example.qyuanuser.service.impl;
 
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
-
+import org.example.qyuanuser.Result.CommonResult;
 import jakarta.annotation.Resource;
-
+import org.example.qyuanuser.util.EmailApi;
 import org.springframework.stereotype.Service;
 import org.example.qyuanuser.service.UserAuthService;
 import org.example.qyuanuser.util.JWT;
@@ -16,6 +16,9 @@ import org.example.qyuanuser.Result.RegisterResult;
 public class UserAuthServiceImpl extends ServiceImpl<UserMapper, User> implements UserAuthService {
     @Resource
     private UserMapper userMapper;
+    
+    @Resource
+    private EmailApi emailApi;
 
     @Override
     public RegisterResult register(RegisterDTO registerDTO) {
@@ -76,7 +79,7 @@ public class UserAuthServiceImpl extends ServiceImpl<UserMapper, User> implement
             loginResult.setSuccess(false);
             return loginResult;
         }
-        //验证码数据库里没有实现，先不做验证码校验
+        //TODO: 验证码数据库里没有实现，先不做验证码校验
 
         //获取user
         User user = userMapper.getUserByEmail(captchaLoginDTO.getEmail());
@@ -126,7 +129,29 @@ public class UserAuthServiceImpl extends ServiceImpl<UserMapper, User> implement
     }
 
     @Override
-    public boolean sendCaptcha(SendCaptchaDTO sendCaptchaDTO) {
-        return true;
+    public CommonResult sendCaptcha(SendCaptchaDTO sendCaptchaDTO, int user_id) {
+        //参数scene未使用
+        CommonResult result = new CommonResult();
+        if(!sendCaptchaDTO.isFull()){
+            result.setMessage("缺少参数");
+            result.setSuccess(false);
+            return result;
+        }
+        if(!sendCaptchaDTO.isEmailValid()){
+            result.setMessage("邮箱格式错误");
+            result.setSuccess(false);
+            return result;
+        }
+        //发送验证码
+        String captcha = String.valueOf((int)(Math.random() * 1000000));
+        if (!emailApi.sendGeneralEmail("验证码", "验证码：" + captcha, sendCaptchaDTO.getEmail())){
+            result.setMessage("发送验证码失败");
+            result.setSuccess(false);
+            return result;
+        }
+        //保存验证码
+        //TODO:数据库里没有存储验证码的地方
+        result.setSuccess(true);
+        return result;
     }
 }

@@ -7,6 +7,6 @@ public interface UserAuthService {
     RegisterResult register(RegisterDTO registerDTO);
     LoginResult captchaLogin(CaptchaLoginDTO captchaLoginDTO);
     LoginResult passwordLogin(PasswordLoginDTO passwordLoginDTO);
-    boolean sendCaptcha(SendCaptchaDTO sendCaptchaDTO);
+    CommonResult sendCaptcha(SendCaptchaDTO sendCaptchaDTO, int user_id);
     
 }
