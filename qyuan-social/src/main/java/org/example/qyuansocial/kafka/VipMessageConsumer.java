@@ -50,6 +50,63 @@ public class VipMessageConsumer {
             // 这里不抛异常，避免消息一直重试；如需重试可接入死信队列等机制
         }
     }
+
+    @KafkaListener(topics = "message-claim-topic", groupId = "qyuan-social-group")
+    public void onClaimMessage(String messageJson) {
+        try {
+            log.info("收到 message-claim-topic 消息: {}", messageJson);
+            BuyVipMessage claimMessage = JSON.parseObject(messageJson, BuyVipMessage.class);
+            if (claimMessage == null) {
+                log.warn("解析后的认领通知消息为空，忽略该消息");
+                return;
+            }
+
+            SystemMessage systemMessage = new SystemMessage();
+            systemMessage.setMessageTitle(claimMessage.getTitle());
+            systemMessage.setMessageContent(claimMessage.getContent());
+            messageService.createMessageAndRelateUser(systemMessage,Long.valueOf(claimMessage.getUserId()));
+        } catch (Exception e) {
+            log.error("消费 message-claim-topic 处理失败, message={}", messageJson, e);
+        }
+    }
+
+    @KafkaListener(topics = "message-report-topic", groupId = "qyuan-social-group")
+    public void onReportMessage(String messageJson) {
+        try {
+            log.info("收到 message-report-topic 消息: {}", messageJson);
+            BuyVipMessage reportMessage = JSON.parseObject(messageJson, BuyVipMessage.class);
+            if (reportMessage == null) {
+                log.warn("解析后的举报通知消息为空，忽略该消息");
+                return;
+            }
+
+            SystemMessage systemMessage = new SystemMessage();
+            systemMessage.setMessageTitle(reportMessage.getTitle());
+            systemMessage.setMessageContent(reportMessage.getContent());
+            messageService.createMessageAndRelateUser(systemMessage,Long.valueOf(reportMessage.getUserId()));
+        } catch (Exception e) {
+            log.error("消费 message-report-topic 处理失败, message={}", messageJson, e);
+        }
+    }
+
+    @KafkaListener(topics = "message-vip-expired-topic", groupId = "qyuan-social-group")
+    public void onVipExpiredMessage(String messageJson) {
+        try {
+            log.info("收到 message-vip-expired-topic 消息: {}", messageJson);
+            BuyVipMessage expiredMessage = JSON.parseObject(messageJson, BuyVipMessage.class);
+            if (expiredMessage == null) {
+                log.warn("解析后的会员过期消息为空，忽略该消息");
+                return;
+            }
+
+            SystemMessage systemMessage = new SystemMessage();
+            systemMessage.setMessageTitle(expiredMessage.getTitle());
+            systemMessage.setMessageContent(expiredMessage.getContent());
+            messageService.createMessageAndRelateUser(systemMessage,Long.valueOf(expiredMessage.getUserId()));
+        } catch (Exception e) {
+            log.error("消费 message-vip-expired-topic 处理失败, message={}", messageJson, e);
+        }
+    }
 }
 
 
