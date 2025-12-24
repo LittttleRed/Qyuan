@@ -1,9 +1,12 @@
 package com.example.qyuanes.controller;
 
+import com.example.qyuanes.dto.HotSearchResponse;
 import com.example.qyuanes.dto.PaperSearchRequest;
 import com.example.qyuanes.dto.PaperSearchResponse;
+import com.example.qyuanes.dto.SearchSuggestionResponse;
 import com.example.qyuanes.entity.Paper;
 import com.example.qyuanes.service.ElasticSearchService;
+import com.example.qyuanes.service.HotSearchService;
 import org.example.qyuancommon.Result;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.util.StringUtils;
@@ -22,7 +25,10 @@ import java.util.List;
 public class ElasticSearchTestController {
 
     @Autowired
-    private ElasticSearchService elasticSearchService; 
+    private ElasticSearchService elasticSearchService;
+    
+    @Autowired(required = false)
+    private HotSearchService hotSearchService; 
     /**
     * 简单搜索接口
     * 适合快速查询，只需要关键词
@@ -105,6 +111,51 @@ public Result<PaperSearchResponse> advancedSearchByGet(
     return Result.ok(response, "搜索成功");
 }
 
+/**
+ * 搜索建议/自动补全接口
+ * 根据用户输入的前缀返回搜索建议
+ * 
+ * GET /es/paper/suggest?prefix=软件&size=10
+ * 
+ * @param prefix 搜索前缀（用户正在输入的内容）
+ * @param size 返回的建议数量（可选，默认10，最大50）
+ * @return 搜索建议列表
+ */
+@GetMapping("/paper/suggest")
+public Result<SearchSuggestionResponse> getSearchSuggestions(
+        @RequestParam(required = false) String prefix,
+        @RequestParam(required = false, defaultValue = "10") Integer size) {
+    
+    // 如果没有输入前缀，返回空建议
+    if (prefix == null || prefix.trim().isEmpty()) {
+        SearchSuggestionResponse emptyResponse = new SearchSuggestionResponse("", new java.util.ArrayList<>());
+        return Result.ok(emptyResponse, "无搜索建议");
+    }
+    
+    SearchSuggestionResponse response = elasticSearchService.searchSuggestions(prefix, size);
+    return Result.ok(response, "获取搜索建议成功");
+}
+
+/**
+ * 获取热门搜索关键词列表
+ * 返回最近最常搜索的N个关键词
+ * 
+ * GET /es/paper/hot-search?size=10
+ * 
+ * @param size 返回的数量（可选，默认10）
+ * @return 热门搜索关键词列表，按搜索次数降序排列
+ */
+@GetMapping("/paper/hot-search")
+public Result<HotSearchResponse> getHotSearches(
+        @RequestParam(required = false, defaultValue = "10") Integer size) {
+    
+    if (hotSearchService == null) {
+        return Result.fail("热门搜索功能暂未启用");
+    }
+    
+    HotSearchResponse response = hotSearchService.getHotSearches(size);
+    return Result.ok(response, "获取热门搜索成功");
+}
 
 
 }
