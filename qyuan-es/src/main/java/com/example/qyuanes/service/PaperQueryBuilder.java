@@ -50,35 +50,285 @@ public class PaperQueryBuilder {
     }
 
     /**
-     * 构建关键词查询
+     * 构建关键词查询 - 智能查询策略
      * 在title、abstract、journal_source字段中搜索
+     * 
+     * 智能查询策略说明：
+     * 1. 对于包含空格的查询（如"Machine Learning"）：
+     *    - 优先：精确短语匹配（boost=3.0）
+     *    - 其次：所有词都必须匹配（boost=2.0）
+     *    - 最后：部分词匹配（boost=1.0）
+     * 
+     * 2. 对于连写词（如"MachineLearning"）：
+     *    - 优先：精确匹配（作为整体，boost=3.0）
+     *    - 其次：尝试匹配分开的词（如"Machine Learning"，boost=2.0）
+     *    - 最后：模糊匹配（boost=1.0）
+     * 
+     * 3. 使用should组合多种查询，ES会根据boost自动评分排序
+     *    更精确的匹配会排在前面，符合人类直觉
      */
     private static void buildKeywordQuery(PaperSearchRequest request, BoolQuery.Builder builder) {
         if (!StringUtils.hasText(request.getKeyword())) {
             return; // 没有关键词，直接返回
         }
 
-        // 使用should组合多个match查询，实现OR关系
-        // 只要匹配title、abstract或journal_source中的任意一个即可
-        builder.must(m -> m.
-            bool(b -> b
-                .should(s -> s.match(mt -> mt
-                    .field("title")    // 在title字段中搜索
-                    .query(request.getKeyword())    // 搜索关键词
-                    .fuzziness("AUTO")  // 模糊匹配（容错，如"machin"可以匹配"machine"）  存疑
-                )) 
-                .should(s -> s.match(mt -> mt
-                    .field("abstract")                 // 在abstract字段中搜索
-                    .query(request.getKeyword())
-                    .fuzziness("AUTO")
-                ))
-                .should(s -> s.match(mt -> mt
-                    .field("journal_source")           // 在journal_source字段中搜索
-                    .query(request.getKeyword())
-                ))
-                .minimumShouldMatch("1")               // 至少匹配一个should条件
-            )
+        String keyword = request.getKeyword().trim();
+        boolean containsSpace = keyword.contains(" ");
+        
+        if (containsSpace) {
+            // ========== 包含空格的查询（如"Machine Learning"） ==========
+            buildMultiWordQuery(keyword, builder);
+        } else {
+            // ========== 单个词或连写词（如"MachineLearning"） ==========
+            buildSingleWordQuery(keyword, builder);
+        }
+    }
+    
+    /**
+     * 构建多词查询（包含空格）
+     * 策略：精确短语 > 所有词匹配 > 部分词匹配
+     */
+    private static void buildMultiWordQuery(String keyword, BoolQuery.Builder builder) {
+        builder.must(m -> m
+            .bool(b -> {
+                // 策略1：精确短语匹配（最高优先级，boost=3.0）
+                // 匹配连续的短语，如"Machine Learning"
+                b.should(s -> s
+                    .bool(bb -> bb
+                        .should(ss -> ss.matchPhrase(mp -> mp
+                            .field("title")
+                            .query(keyword)
+                            .slop(0)
+                            .boost(3.0f)
+                        ))
+                        .should(ss -> ss.matchPhrase(mp -> mp
+                            .field("abstract")
+                            .query(keyword)
+                            .slop(2)  // abstract允许词之间有少量间隔
+                            .boost(3.0f)
+                        ))
+                        .should(ss -> ss.matchPhrase(mp -> mp
+                            .field("journal_source")
+                            .query(keyword)
+                            .slop(0)
+                            .boost(3.0f)
+                        ))
+                        .minimumShouldMatch("1")
+                    )
+                );
+                
+                // 策略2：所有词都必须匹配（中等优先级，boost=2.0）
+                // 匹配包含所有词的文档，即使不连续
+                b.should(s -> s
+                    .bool(bb -> bb
+                        .should(ss -> ss.match(mt -> mt
+                            .field("title")
+                            .query(keyword)
+                            .operator(co.elastic.clients.elasticsearch._types.query_dsl.Operator.And)
+                            .boost(2.0f)
+                        ))
+                        .should(ss -> ss.match(mt -> mt
+                            .field("abstract")
+                            .query(keyword)
+                            .operator(co.elastic.clients.elasticsearch._types.query_dsl.Operator.And)
+                            .boost(2.0f)
+                        ))
+                        .should(ss -> ss.match(mt -> mt
+                            .field("journal_source")
+                            .query(keyword)
+                            .operator(co.elastic.clients.elasticsearch._types.query_dsl.Operator.And)
+                            .boost(2.0f)
+                        ))
+                        .minimumShouldMatch("1")
+                    )
+                );
+                
+                // 策略3：部分词匹配（最低优先级，boost=1.0）
+                // 匹配包含任意词的文档（OR关系）
+                b.should(s -> s
+                    .bool(bb -> bb
+                        .should(ss -> ss.match(mt -> mt
+                            .field("title")
+                            .query(keyword)
+                            .operator(co.elastic.clients.elasticsearch._types.query_dsl.Operator.Or)
+                            .boost(1.0f)
+                        ))
+                        .should(ss -> ss.match(mt -> mt
+                            .field("abstract")
+                            .query(keyword)
+                            .operator(co.elastic.clients.elasticsearch._types.query_dsl.Operator.Or)
+                            .boost(1.0f)
+                        ))
+                        .should(ss -> ss.match(mt -> mt
+                            .field("journal_source")
+                            .query(keyword)
+                            .operator(co.elastic.clients.elasticsearch._types.query_dsl.Operator.Or)
+                            .boost(1.0f)
+                        ))
+                        .minimumShouldMatch("1")
+                    )
+                );
+                
+                return b.minimumShouldMatch("1");  // 至少满足一个策略
+            })
         );
+    }
+    
+    /**
+     * 构建单词查询（不包含空格，可能是连写词）
+     * 策略：精确匹配 > 分词匹配 > 模糊匹配
+     */
+    private static void buildSingleWordQuery(String keyword, BoolQuery.Builder builder) {
+        builder.must(m -> m
+            .bool(b -> {
+                // 策略1：精确匹配（最高优先级，boost=3.0）
+                // 匹配完整的词，如"MachineLearning"作为整体
+                b.should(s -> s
+                    .bool(bb -> bb
+                        .should(ss -> ss.match(mt -> mt
+                            .field("title")
+                            .query(keyword)
+                            .operator(co.elastic.clients.elasticsearch._types.query_dsl.Operator.And)
+                            .boost(3.0f)
+                        ))
+                        .should(ss -> ss.match(mt -> mt
+                            .field("abstract")
+                            .query(keyword)
+                            .operator(co.elastic.clients.elasticsearch._types.query_dsl.Operator.And)
+                            .boost(3.0f)
+                        ))
+                        .should(ss -> ss.match(mt -> mt
+                            .field("journal_source")
+                            .query(keyword)
+                            .operator(co.elastic.clients.elasticsearch._types.query_dsl.Operator.And)
+                            .boost(3.0f)
+                        ))
+                        .minimumShouldMatch("1")
+                    )
+                );
+                
+                // 策略2：尝试匹配分开的词（中等优先级，boost=2.0）
+                // 如果"MachineLearning"被分词成["machine", "learning"]
+                // 尝试匹配包含这两个词的文档（即使分开写）
+                String spacedKeyword = insertSpacesBetweenCaps(keyword);
+                if (!spacedKeyword.equals(keyword)) {
+                    // 如果成功插入了空格（说明是连写词），添加短语匹配
+                    b.should(s -> s
+                        .bool(bb -> bb
+                            .should(ss -> ss.matchPhrase(mp -> mp
+                                .field("title")
+                                .query(spacedKeyword)
+                                .slop(0)
+                                .boost(2.0f)
+                            ))
+                            .should(ss -> ss.matchPhrase(mp -> mp
+                                .field("abstract")
+                                .query(spacedKeyword)
+                                .slop(2)  // 允许词之间有少量间隔
+                                .boost(2.0f)
+                            ))
+                            .should(ss -> ss.matchPhrase(mp -> mp
+                                .field("journal_source")
+                                .query(spacedKeyword)
+                                .slop(0)
+                                .boost(2.0f)
+                            ))
+                            .minimumShouldMatch("1")
+                        )
+                    );
+                    
+                    // 也尝试所有词都必须匹配的方式
+                    b.should(s -> s
+                        .bool(bb -> bb
+                            .should(ss -> ss.match(mt -> mt
+                                .field("title")
+                                .query(spacedKeyword)
+                                .operator(co.elastic.clients.elasticsearch._types.query_dsl.Operator.And)
+                                .boost(2.0f)
+                            ))
+                            .should(ss -> ss.match(mt -> mt
+                                .field("abstract")
+                                .query(spacedKeyword)
+                                .operator(co.elastic.clients.elasticsearch._types.query_dsl.Operator.And)
+                                .boost(2.0f)
+                            ))
+                            .should(ss -> ss.match(mt -> mt
+                                .field("journal_source")
+                                .query(spacedKeyword)
+                                .operator(co.elastic.clients.elasticsearch._types.query_dsl.Operator.And)
+                                .boost(2.0f)
+                            ))
+                            .minimumShouldMatch("1")
+                        )
+                    );
+                }
+                
+                // 策略3：模糊匹配（最低优先级，boost=1.0）
+                // 使用OR关系，匹配包含部分词的文档
+                b.should(s -> s
+                    .bool(bb -> bb
+                        .should(ss -> ss.match(mt -> mt
+                            .field("title")
+                            .query(keyword)
+                            .operator(co.elastic.clients.elasticsearch._types.query_dsl.Operator.Or)
+                            .boost(1.0f)
+                        ))
+                        .should(ss -> ss.match(mt -> mt
+                            .field("abstract")
+                            .query(keyword)
+                            .operator(co.elastic.clients.elasticsearch._types.query_dsl.Operator.Or)
+                            .boost(1.0f)
+                        ))
+                        .should(ss -> ss.match(mt -> mt
+                            .field("journal_source")
+                            .query(keyword)
+                            .operator(co.elastic.clients.elasticsearch._types.query_dsl.Operator.Or)
+                            .boost(1.0f)
+                        ))
+                        .minimumShouldMatch("1")
+                    )
+                );
+                
+                return b.minimumShouldMatch("1");  // 至少满足一个策略
+            })
+        );
+    }
+    
+    /**
+     * 在连写词的大写字母前插入空格
+     * 例如："MachineLearning" -> "Machine Learning"
+     * 用于智能识别连写词并尝试匹配分开的词
+     */
+    private static String insertSpacesBetweenCaps(String word) {
+        if (word == null || word.length() < 2) {
+            return word;
+        }
+        
+        // 检查是否包含大写字母（除了首字母）
+        boolean hasInternalCaps = false;
+        for (int i = 1; i < word.length(); i++) {
+            if (Character.isUpperCase(word.charAt(i))) {
+                hasInternalCaps = true;
+                break;
+            }
+        }
+        
+        if (!hasInternalCaps) {
+            return word;  // 没有内部大写字母，不是连写词
+        }
+        
+        // 在大写字母前插入空格（首字母除外）
+        StringBuilder result = new StringBuilder();
+        result.append(word.charAt(0));
+        
+        for (int i = 1; i < word.length(); i++) {
+            if (Character.isUpperCase(word.charAt(i))) {
+                result.append(' ');
+            }
+            result.append(word.charAt(i));
+        }
+        
+        return result.toString();
     }
 
     /**
@@ -140,16 +390,18 @@ public class PaperQueryBuilder {
                     var rangeBuilder = r.field("updated");
                     
                     // gte: greater than or equal（大于等于）
+                    // 将OffsetDateTime转换为ISO 8601格式字符串
                     if (request.getStartTime() != null) {
-                        rangeBuilder.gte(JsonData.of(request.getStartTime()));
+                        rangeBuilder.gte(JsonData.of(request.getStartTime().toString()));
                     }
                     
                     // lte: less than or equal（小于等于）
+                    // 将OffsetDateTime转换为ISO 8601格式字符串
                     if (request.getEndTime() != null) {
-                        rangeBuilder.lte(JsonData.of(request.getEndTime()));
+                        rangeBuilder.lte(JsonData.of(request.getEndTime().toString()));
                     }
                     
-                    return rangeBuilder; // ?
+                    return rangeBuilder;
                 })
             );
         }
