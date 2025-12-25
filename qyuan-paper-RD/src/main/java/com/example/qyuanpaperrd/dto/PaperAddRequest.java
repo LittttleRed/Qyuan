@@ -1,9 +1,11 @@
 package com.example.qyuanpaperrd.dto;
 
 import lombok.Data;
+import org.springframework.web.multipart.MultipartFile;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
+
 import java.util.List;
 
 /**
@@ -45,15 +47,8 @@ public class PaperAddRequest {
     private String journalSource;
 
     /**
-     * PDF文件URL
-     */
-    @Size(max = 500, message = "PDF文件URL长度不能超过500个字符")
-    private String pdfFileUrl;
-
-    /**
      * 原链接
      */
-    @NotBlank(message = "原链接不能为空")
     @Size(max = 500, message = "原链接长度不能超过500个字符")
     private String url;
 

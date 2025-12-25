@@ -9,6 +9,7 @@ public class UpdatePersonalInfoDTO {
     private String last_name;
     private String institution;
     private String research_direction;
+    private String orcid;
 
     public boolean isFull() {
         return username != null && first_name != null && last_name != null && institution != null && research_direction != null;

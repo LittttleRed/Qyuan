@@ -82,4 +82,9 @@ public class PaperDTO {
      * 是否已被当前用户认领
      */
     private Boolean isClaimed;
+
+    /**
+     * 收藏次数
+     */
+    private Integer favoriteCount;
 }

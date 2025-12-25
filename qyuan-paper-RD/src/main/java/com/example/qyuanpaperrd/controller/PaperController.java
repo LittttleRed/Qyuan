@@ -231,7 +231,6 @@ public class PaperController {
     // ========== 管理功能接口 ==========
 
     @PostMapping
-    @PreAuthorize("hasRole('ADMIN') or hasRole('EDITOR')")
     @Operation(summary = "添加论文", description = "新增论文信息（管理员/编辑者权限）")
     @ApiResponses(value = {
         @ApiResponse(responseCode = "201", description = "论文添加成功"),

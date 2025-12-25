@@ -1,8 +1,10 @@
 package org.example.qyuanorder.config;
 
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import com.fasterxml.jackson.annotation.PropertyAccessor;
+import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
@@ -33,17 +35,10 @@ import java.time.format.DateTimeFormatter;
 @EnableCaching
 public class RedisConfig {
 
-    /**
-     * 创建支持Java 8时间类型的ObjectMapper
-     */
-    @Bean
-    public ObjectMapper redisObjectMapper() {
+    private ObjectMapper createRedisObjectMapper() {
         ObjectMapper objectMapper = new ObjectMapper();
 
-        // 注册JavaTimeModule来处理Java 8时间类型
         JavaTimeModule javaTimeModule = new JavaTimeModule();
-
-        // 配置LocalDateTime的序列化和反序列化
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
         javaTimeModule.addSerializer(LocalDateTime.class,
                 new LocalDateTimeSerializer(formatter));
@@ -53,29 +48,32 @@ public class RedisConfig {
         objectMapper.registerModule(javaTimeModule);
         objectMapper.setVisibility(PropertyAccessor.ALL, JsonAutoDetect.Visibility.ANY);
 
-        // 移除多态类型处理，避免在序列化时添加类型信息
-        // objectMapper.activateDefaultTyping(
-        //         objectMapper.getPolymorphicTypeValidator(),
-        //         ObjectMapper.DefaultTyping.NON_FINAL,
-        //         JsonTypeInfo.As.PROPERTY);
+        // 仅为Redis启用
+        objectMapper.activateDefaultTyping(
+                objectMapper.getPolymorphicTypeValidator(),
+                ObjectMapper.DefaultTyping.NON_FINAL,
+                JsonTypeInfo.As.PROPERTY);
 
+        objectMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
         objectMapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
 
         return objectMapper;
     }
 
-    /**
-     * 创建支持Java 8时间类型的GenericJackson2JsonRedisSerializer
-     */
     @Bean
-    public GenericJackson2JsonRedisSerializer genericJackson2JsonRedisSerializer(ObjectMapper redisObjectMapper) {
-        // 使用配置好的ObjectMapper创建序列化器
-        return new GenericJackson2JsonRedisSerializer(redisObjectMapper);
+    public GenericJackson2JsonRedisSerializer genericJackson2JsonRedisSerializer() {
+        // 直接创建，不依赖注入
+        return new GenericJackson2JsonRedisSerializer(createRedisObjectMapper());
     }
 
-    /**
-     * 配置RedisTemplate，设置序列化器
-     */
+
+
+    // 用于忽略 @class 属性的Mixin
+    @JsonIgnoreProperties(value = "@class", ignoreUnknown = true)
+    private abstract static class IgnoreClassPropertyMixin {
+    }
+
+
     @Bean
     public RedisTemplate<String, Object> redisTemplate(
             RedisConnectionFactory connectionFactory,
@@ -84,34 +82,45 @@ public class RedisConfig {
         RedisTemplate<String, Object> template = new RedisTemplate<>();
         template.setConnectionFactory(connectionFactory);
 
-        // 使用StringRedisSerializer来序列化和反序列化redis的key值
         StringRedisSerializer stringRedisSerializer = new StringRedisSerializer();
 
         template.setKeySerializer(stringRedisSerializer);
-        template.setValueSerializer(jsonRedisSerializer);  // 使用同一个序列化器
+        template.setValueSerializer(jsonRedisSerializer);
         template.setHashKeySerializer(stringRedisSerializer);
-        template.setHashValueSerializer(jsonRedisSerializer);  // 使用同一个序列化器
+        template.setHashValueSerializer(jsonRedisSerializer);
 
         template.afterPropertiesSet();
         return template;
     }
+    @Bean
+    public RedisTemplate<String, String> redisTemplateForCaptcha(
+            RedisConnectionFactory connectionFactory) {
 
-    /**
-     * 配置缓存管理器
-     */
+        RedisTemplate<String, String> template = new RedisTemplate<>();
+        template.setConnectionFactory(connectionFactory);
+
+        StringRedisSerializer stringRedisSerializer = new StringRedisSerializer();
+
+        template.setKeySerializer(stringRedisSerializer);
+        template.setValueSerializer(stringRedisSerializer);
+        template.setHashKeySerializer(stringRedisSerializer);
+        template.setHashValueSerializer(stringRedisSerializer);
+
+        template.afterPropertiesSet();
+        return template;
+    }
     @Bean
     public RedisCacheManager cacheManager(
             RedisConnectionFactory connectionFactory,
             GenericJackson2JsonRedisSerializer jsonRedisSerializer) {
 
-        // 配置序列化
         RedisCacheConfiguration config = RedisCacheConfiguration.defaultCacheConfig()
-                .entryTtl(Duration.ofHours(1))  // 设置缓存过期时间为1小时
+                .entryTtl(Duration.ofHours(1))
                 .serializeKeysWith(RedisSerializationContext.SerializationPair
                         .fromSerializer(new StringRedisSerializer()))
                 .serializeValuesWith(RedisSerializationContext.SerializationPair
                         .fromSerializer(jsonRedisSerializer))
-                .disableCachingNullValues();  // 不缓存null值
+                .disableCachingNullValues();
 
         return RedisCacheManager.builder(connectionFactory)
                 .cacheDefaults(config)

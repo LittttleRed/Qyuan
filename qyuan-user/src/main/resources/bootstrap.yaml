@@ -29,3 +29,20 @@ spring:
         timeout: 10000
         username: nacos
         password: QianYuanWanMa_18
+  mail:
+    host: smtp.qq.com
+    port: 587
+    username: 3417934680@qq.com
+    password: hrejjjaaxoetdade
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+
+minio:
+  endpoint: http://120.46.205.113:9098
+  accessKey: admin
+  secretKey: QianYuanWanMa_18
+  bucketName: avatar

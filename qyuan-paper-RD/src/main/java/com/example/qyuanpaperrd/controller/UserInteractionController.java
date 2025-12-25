@@ -2,11 +2,13 @@ package com.example.qyuanpaperrd.controller;
 
 import com.example.qyuanpaperrd.common.Result;
 import com.example.qyuanpaperrd.dto.ClaimRequest;
+import com.example.qyuanpaperrd.dto.PaperDTO;
 import com.example.qyuanpaperrd.entity.Claim;
 import com.example.qyuanpaperrd.service.UserInteractionService;
 import com.example.qyuanpaperrd.service.ClaimService;
 import com.example.qyuanpaperrd.common.PageResult;
 import com.alibaba.fastjson2.JSONObject;
+import com.example.qyuanpaperrd.service.UserPaperService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -39,6 +41,8 @@ public class UserInteractionController {
     private final UserInteractionService userInteractionService;
 
     private final ClaimService claimService;
+
+    private final UserPaperService userPaperService;
 
     @PostMapping("/claims")
     @Operation(summary = "认领论文", description = "用户主动认领某篇论文")
@@ -107,9 +111,12 @@ public class UserInteractionController {
             @RequestParam(defaultValue = "1") @Min(1) Integer page,
 
             @Parameter(description = "每页大小")
-            @RequestParam(defaultValue = "20") @Min(1) Integer size) {
+            @RequestParam(defaultValue = "20") @Min(1) Integer size,
+
+            @Parameter(description = "认领状态")
+            @RequestParam(required = false) Integer status) {
         try {
-            PageResult<Claim> result = claimService.getAllClaims(page, size);
+            PageResult<Claim> result = claimService.getAllClaims(page, size,status);
             return ResponseEntity.ok(Result.success(result));
         } catch (Exception e) {
             log.error("获取认领记录失败", e);
@@ -146,12 +153,13 @@ public class UserInteractionController {
     @Operation(summary = "更新认领记录", description = "更新认领记录")
     public ResponseEntity<Result<String>> updateClaim(
             @PathVariable("claim_id") Long claim_id,
-
             @RequestBody JSONObject data
             ) {
         try {
             Integer status = data.getInteger("status");
-            claimService.updateClaim(claim_id, status);
+            Long user_id = data.getLong("user_id");
+            Long paper_id = data.getLong("paper_id");
+            claimService.updateClaim(claim_id, status, user_id, paper_id);
             return ResponseEntity.ok(Result.success("更新成功"));
         } catch (Exception e) {
             log.error("更新认领记录失败", e);
@@ -159,5 +167,51 @@ public class UserInteractionController {
                     .body(Result.error(e.getMessage()));
         }
     }
+
+    @GetMapping("/papers")
+    @Operation(summary = "获取我的论文", description = "获取用户相关的论文列表")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "获取成功"),
+        @ApiResponse(responseCode = "500", description = "获取失败")
+    })
+    public ResponseEntity<Result<PageResult<com.example.qyuanpaperrd.dto.PaperDTO>>> getUserPapers(
+            @Parameter(description = "用户ID", required = true)
+            @RequestHeader("USER-ID") Long userId,
+
+            @Parameter(description = "页码")
+            @RequestParam(defaultValue = "1") @Min(1) Integer page,
+
+            @Parameter(description = "每页大小")
+            @RequestParam(defaultValue = "20") @Min(1) Integer size) {
+        try {
+            PageResult<PaperDTO> result = userPaperService.getUserPapers(userId, page, size);
+            return ResponseEntity.ok(Result.success(result));
+        } catch (Exception e) {
+            log.error("获取用户论文失败", e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Result.error("获取用户论文失败：" + e.getMessage()));
+        }
+    }
+
+    @GetMapping("/getUsers")
+    @Operation(summary = "获取论文所属用户", description = "获取论文所属用户")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "获取成功"),
+        @ApiResponse(responseCode = "500", description = "获取失败")
+    })
+    public ResponseEntity<Result<Object>> getUsers(
+            @Parameter(description = "论文ID", required = true)
+            @RequestParam Long paperId
+            ) {
+        try {
+            Object result = userPaperService.getUsers(paperId);
+            return ResponseEntity.ok(Result.success(result));
+        } catch (Exception e) {
+            log.error("获取用户论文失败", e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Result.error("获取用户论文失败：" + e.getMessage()));
+        }
+    }
+
 
 }

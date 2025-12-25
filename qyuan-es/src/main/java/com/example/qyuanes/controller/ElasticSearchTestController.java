@@ -152,9 +152,16 @@ public Result<HotSearchResponse> getHotSearches(
     if (hotSearchService == null) {
         return Result.fail("热门搜索功能暂未启用");
     }
-    
     HotSearchResponse response = hotSearchService.getHotSearches(size);
     return Result.ok(response, "获取热门搜索成功");
+}
+
+@GetMapping("/paper/hot-paper")
+    public Result<Object> getHotPapers(
+        @RequestParam(required = false, defaultValue = "10") Integer size) {
+
+    Result<Object> response = elasticSearchService.getHotPapers(size);
+    return Result.ok(response, "获取热门论文成功");
 }
 
 

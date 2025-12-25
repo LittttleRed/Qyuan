@@ -5,12 +5,14 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 
+import java.io.Serializable;
 import java.time.LocalDateTime;
 
 @Data
 @NoArgsConstructor
 @TableName("user")
-public class User {
+public class User implements Serializable {
+    private static final long serialVersionUID = 1L;
     
     @TableId(type = IdType.AUTO)
     private Integer userId;
@@ -48,14 +50,17 @@ public class User {
     @TableField("use_times")
     private Integer useTimes;
 
+    @TableField("avatar")
+    private String avatar;
     /**
      * 加密密码
      *
      * @param rawPassword 明文密码
      */
-    public void setPassword(String rawPassword) {
+    public void encodePassword(String rawPassword) {
         BCryptPasswordEncoder encoder = new BCryptPasswordEncoder();
         this.password = encoder.encode(rawPassword);
+        System.out.println("加密后的密码：" + this.password);
     }
 
     /**

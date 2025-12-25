@@ -60,11 +60,11 @@ public class AuthController {
     }
 
     @PostMapping("/captcha")
-    public Result<Object> sendCaptcha(@RequestBody SendCaptchaDTO sendCaptchaDTO, @RequestHeader ("USER-ID") int user_id) {
+    public Result<Object> sendCaptcha(@RequestBody SendCaptchaDTO sendCaptchaDTO) {
         try {
-            CommonResult result = userAuthService.sendCaptcha(sendCaptchaDTO, user_id);
+            CommonResult result = userAuthService.sendCaptcha(sendCaptchaDTO);
             if(result.isSuccess()){
-                return Result.ok();
+                return Result.ok(result);
             } else {
                 return Result.fail(result.getMessage());
             }

@@ -7,10 +7,13 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.example.qyuanpaperrd.entity.AuthorPaper;
 import com.example.qyuanpaperrd.entity.Paper;
+import com.example.qyuanpaperrd.entity.UserPaper;
 import com.example.qyuanpaperrd.mapper.AuthorPaperMapper;
+import com.example.qyuanpaperrd.mapper.UserPaperMapper;
 import com.example.qyuanpaperrd.service.HuaweiObsService;
 import com.example.qyuanpaperrd.service.MinioService;
 import jakarta.annotation.Resource;
@@ -45,6 +48,8 @@ public class ClaimServiceImpl extends ServiceImpl<ClaimMapper, Claim> implements
 
   @Resource
   private final AuthorPaperMapper authorPaperMapper;
+  @Resource
+  private final UserPaperMapper userPaperMapper;
   private final PaperService paperService;
   
   @Resource
@@ -147,8 +152,11 @@ public class ClaimServiceImpl extends ServiceImpl<ClaimMapper, Claim> implements
   }
 
   @Override
-  public PageResult<Claim> getAllClaims(Integer page, Integer size) {
-    Page<Claim> pageInfo = claimMapper.selectPage(new Page<>(page, size), null);
+  public PageResult<Claim> getAllClaims(Integer page, Integer size,Integer  status) {
+    // 创建查询条件
+    LambdaQueryWrapper<Claim> queryWrapper = new LambdaQueryWrapper<>();
+    queryWrapper.eq(status != null, Claim::getStatus, status);
+    Page<Claim> pageInfo = claimMapper.selectPage(new Page<>(page, size),  queryWrapper);
     return  PageResult.of(
           pageInfo.getRecords(),
             pageInfo.getTotal(),
@@ -189,8 +197,14 @@ public class ClaimServiceImpl extends ServiceImpl<ClaimMapper, Claim> implements
   }
 
   @Override
-  public void updateClaim(Long claim_id, Integer status) {
+  public void updateClaim(Long claim_id, Integer status,Long userId,Long paperId) {
     claimMapper.updateStatus(claim_id,status);
+    if(status == 3){
+      UserPaper userPaper = new UserPaper();
+      userPaper.setUserId(userId);
+      userPaper.setPaperId(paperId);
+      userPaperMapper.insert(userPaper);
+    }
   }
 
 }

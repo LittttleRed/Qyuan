@@ -76,10 +76,10 @@ public class CommentServiceImpl extends ServiceImpl<CommentMapper, Comment> impl
     }
 
     @Override
-    public PageResponse<Comment> listByAchievement(Long achievementId, int page, int size) {
+    public PageResponse<Comment> listByAchievement(Long achievementId,String achievementType, int page, int size) {
         Page<Comment> pageParam = new Page<>(page, size);
         QueryWrapper<Comment> wrapper = new QueryWrapper<>();
-        wrapper.eq("achievement_id", achievementId)
+        wrapper.eq("achievement_id", achievementId).eq("achievement_type", achievementType)
                .orderByDesc("comment_id");
         Page<Comment> result = this.page(pageParam, wrapper);
         return new PageResponse<>(

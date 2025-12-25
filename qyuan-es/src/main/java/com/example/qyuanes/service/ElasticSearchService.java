@@ -6,7 +6,6 @@ import com.example.qyuanes.dto.PaperWithHighlight;
 import com.example.qyuanes.dto.SearchSuggestionResponse;
 import com.example.qyuanes.entity.Paper;
 import co.elastic.clients.elasticsearch.ElasticsearchClient;
-import co.elastic.clients.elasticsearch._types.Result;
 import co.elastic.clients.elasticsearch._types.SortOrder;
 import co.elastic.clients.elasticsearch._types.query_dsl.BoolQuery;
 import co.elastic.clients.elasticsearch._types.query_dsl.Query;
@@ -17,6 +16,7 @@ import co.elastic.clients.elasticsearch.indices.CreateIndexRequest;
 import co.elastic.clients.elasticsearch.indices.DeleteIndexRequest;
 import co.elastic.clients.elasticsearch.indices.ExistsRequest;
 import lombok.extern.slf4j.Slf4j;
+import org.example.qyuancommon.Result;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
@@ -24,13 +24,10 @@ import org.springframework.util.StringUtils;
 import java.io.IOException;
 import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
-import java.util.ArrayList;
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Set;
+import java.util.*;
+import java.util.function.Function;
 import java.util.stream.Collectors;
+
 
 /**
  * ElasticSearch服务层
@@ -45,6 +42,12 @@ public class ElasticSearchService {
     
     @Autowired(required = false)
     private HotSearchService hotSearchService;  // 使用required=false，即使Redis不可用也不影响搜索功能
+    
+    @Autowired
+    private org.springframework.data.redis.core.StringRedisTemplate redisTemplate;
+    
+    @Autowired
+    private com.fasterxml.jackson.databind.ObjectMapper objectMapper;
 
     // 索引名称常量
     private static final String INDEX_NAME = "papers";
@@ -73,7 +76,7 @@ public PaperSearchResponse searchPapers(PaperSearchRequest request) {
         // ========== 2. 构建查询对象 ==========
         // 使用查询构建器将DTO转换为ES查询
         Query query = PaperQueryBuilder.buildQuery(request);
-        
+
         // ========== 3. 构建排序 ==========
         List<co.elastic.clients.elasticsearch._types.SortOptions> sortOptions = buildSortOptions(request);
         
@@ -84,13 +87,14 @@ public PaperSearchResponse searchPapers(PaperSearchRequest request) {
         // ========== 5. 执行搜索 ==========
         SearchResponse<Paper> response = elasticsearchClient.search(s -> {
             var searchBuilder = s
-                .index(INDEX_NAME)                                    // 指定索引名称
-                .query(query)                                         // 设置查询条件
-                .from(request.getPage() * request.getSize())          // 分页起始位置（跳过前面的记录）
-                .size(request.getSize())                               // 每页大小
-                .sort(sortOptions)                                     // 排序
-                .trackTotalHits(th -> th.enabled(true));               // 启用精确的total计数，不受10000条限制
-            
+                    .index(INDEX_NAME)
+                    .query(query)  // query已经包含了boost权重，会产生_score
+                    .from(request.getPage() * request.getSize())
+                    .size(request.getSize())
+                    .sort(sortOptions)
+                    .trackTotalHits(th -> th.enabled(true));
+
+
             // 如果有关键词搜索，添加高亮配置
             if (needHighlight) {
                 searchBuilder.highlight(h -> h
@@ -113,7 +117,7 @@ public PaperSearchResponse searchPapers(PaperSearchRequest request) {
                     )
                 );
             }
-            
+
             return searchBuilder;
         }, Paper.class);                                              // 指定返回类型为Paper
         
@@ -172,13 +176,20 @@ private List<co.elastic.clients.elasticsearch._types.SortOptions> buildSortOptio
         SortOrder sortOrder = "asc".equalsIgnoreCase(request.getSortOrder()) 
             ? SortOrder.Asc 
             : SortOrder.Desc;
-        
+        if(sortField.equals("relate")){
+            sortList.add(co.elastic.clients.elasticsearch._types.SortOptions.of(s -> s
+                    .score(scoreSort -> scoreSort
+                            .order(SortOrder.Desc)
+                    )
+            ));
+        }else{
         sortList.add(co.elastic.clients.elasticsearch._types.SortOptions.of(s -> s
             .field(f -> f
                 .field(sortField)
                 .order(sortOrder)
             )
         ));
+        }
     }
     
     return sortList;
@@ -260,127 +271,210 @@ private PaperSearchResponse buildEmptyResponse(PaperSearchRequest request) {
  * 示例：
  * 输入: "软件"
  * 输出: ["软件咨询服务业", "软件工程与地理信息系统设计课程", "软件总线体系", ...]
- */
-public SearchSuggestionResponse searchSuggestions(String prefix, Integer size) {
+ */public SearchSuggestionResponse searchSuggestions(String prefix, Integer size) {
     try {
         // ========== 1. 参数校验 ==========
         if (!StringUtils.hasText(prefix)) {
             return new SearchSuggestionResponse("", new ArrayList<>());
         }
-        
+
         // 限制建议数量，避免返回过多数据
-        int suggestionSize = 10;
-        
+        int suggestionSize = size != null && size > 0 ? Math.min(size, 50) : 10;
+
         // 去掉前后空格
         String trimmedPrefix = prefix.trim();
-        
-        // ========== 2. 构建前缀查询 ==========
-        // 在title、abstract、journal_source字段中搜索前缀匹配
+
+        // ========== 2. 构建更灵活的查询 ==========
+        // 使用多种查询方式来扩展匹配范围
         Query query = Query.of(q -> q
-            .bool(b -> b
-                .should(s -> s
-                    .prefix(p -> p
-                        .field("title")
-                        .value(trimmedPrefix)
-                        .boost(3.0f)  // title字段权重最高
-                    )
+                .bool(b -> b
+                        .should(s -> s
+                                .prefix(p -> p
+                                        .field("title")
+                                        .value(trimmedPrefix)
+                                        .boost(3.0f)  // title字段权重最高
+                                )
+                        )
+                        .should(s -> s
+                                .prefix(p -> p
+                                        .field("abstract")
+                                        .value(trimmedPrefix)
+                                        .boost(2.0f)  // abstract字段权重中等
+                                )
+                        )
+                        .should(s -> s
+                                .prefix(p -> p
+                                        .field("journal_source")
+                                        .value(trimmedPrefix)
+                                        .boost(1.0f)  // journal_source字段权重较低
+                                )
+                        )
+                        // 添加包含匹配查询，扩展匹配范围
+                        .should(s -> s
+                                .match(m -> m
+                                        .field("title")
+                                        .query(trimmedPrefix)
+                                        .fuzziness("AUTO")  // 自动模糊匹配
+                                        .boost(2.5f)
+                                )
+                        )
+                        .should(s -> s
+                                .match(m -> m
+                                        .field("abstract")
+                                        .query(trimmedPrefix)
+                                        .fuzziness("AUTO")  // 自动模糊匹配
+                                        .boost(1.5f)
+                                )
+                        )
+                        .should(s -> s
+                                .match(m -> m
+                                        .field("journal_source")
+                                        .query(trimmedPrefix)
+                                        .fuzziness("AUTO")  // 自动模糊匹配
+                                        .boost(0.8f)
+                                )
+                        )
+                        // 添加通配符查询以支持中间匹配
+                        .should(s -> s
+                                .wildcard(w -> w
+                                        .field("title")
+                                        .value("*" + trimmedPrefix + "*")
+                                        .caseInsensitive(true)
+                                        .boost(2.0f)
+                                )
+                        )
+                        .should(s -> s
+                                .wildcard(w -> w
+                                        .field("abstract")
+                                        .value("*" + trimmedPrefix + "*")
+                                        .caseInsensitive(true)
+                                        .boost(1.2f)
+                                )
+                        )
+                        .should(s -> s
+                                .wildcard(w -> w
+                                        .field("journal_source")
+                                        .value("*" + trimmedPrefix + "*")
+                                        .caseInsensitive(true)
+                                        .boost(0.6f)
+                                )
+                        )
+                        .minimumShouldMatch("1")  // 至少匹配一个字段
                 )
-                .should(s -> s
-                    .prefix(p -> p
-                        .field("abstract")
-                        .value(trimmedPrefix)
-                        .boost(2.0f)  // abstract字段权重中等
-                    )
-                )
-                .should(s -> s
-                    .prefix(p -> p
-                        .field("journal_source")
-                        .value(trimmedPrefix)
-                        .boost(1.0f)  // journal_source字段权重较低
-                    )
-                )
-                .minimumShouldMatch("1")  // 至少匹配一个字段
-            )
         );
-        
+
         // ========== 3. 执行搜索 ==========
         SearchResponse<Paper> response = elasticsearchClient.search(s -> s
-            .index(INDEX_NAME)
-            .query(query)
-            .size(suggestionSize * 3)  // 多查询一些，后续去重和筛选
-            .sort(sort -> sort
-                .field(f -> f
-                    .field("_score")  // 按相关性评分排序
-                    .order(SortOrder.Desc)
-                )
-            )
-            .source(src -> src
-                .filter(f -> f
-                    .includes("title", "abstract", "journal_source")  // 只返回需要的字段，提高性能
-                )
-            )
-            , Paper.class);
-        
+                        .index(INDEX_NAME)
+                        .query(query)
+                        .size(suggestionSize * 5)  // 多查询一些，后续去重和筛选
+                        .sort(sort -> sort
+                                .field(f -> f
+                                        .field("_score")  // 按相关性评分排序
+                                        .order(SortOrder.Desc)
+                                )
+                        )
+                        .source(src -> src
+                                .filter(f -> f
+                                        .includes("title", "abstract", "journal_source")  // 只返回需要的字段，提高性能
+                                )
+                        )
+                , Paper.class);
+
         // ========== 4. 提取并处理建议 ==========
         Set<String> suggestionsSet = new LinkedHashSet<>();  // 使用LinkedHashSet保持顺序并去重
-        
+
         for (Hit<Paper> hit : response.hits().hits()) {
             Paper paper = hit.source();
             if (paper == null) {
                 continue;
             }
-            
+
             // 从title字段提取建议（优先级最高）
-            if (StringUtils.hasText(paper.getTitle()) && paper.getTitle().startsWith(prefix)) {
-                suggestionsSet.add(paper.getTitle());
-                if (suggestionsSet.size() >= suggestionSize) {
-                    break;
+            if (StringUtils.hasText(paper.getTitle())) {
+                // 检查是否包含前缀，支持任意位置匹配
+                if (paper.getTitle().toLowerCase().contains(trimmedPrefix.toLowerCase())) {
+                    // 如果是前缀匹配，优先级更高
+                    if (paper.getTitle().toLowerCase().startsWith(trimmedPrefix.toLowerCase())) {
+                        suggestionsSet.add(paper.getTitle());
+                    } else {
+                        // 如果是包含匹配，添加到列表末尾
+                        suggestionsSet.add(paper.getTitle());
+                    }
                 }
             }
-            
-            // 如果还没达到数量，从abstract中提取（提取包含前缀的短语）
-            if (suggestionsSet.size() < suggestionSize 
-                && StringUtils.hasText(paper.getAbstractContent())) {
+
+            // 从abstract中提取包含前缀的短语
+            if (suggestionsSet.size() < suggestionSize
+                    && StringUtils.hasText(paper.getAbstractContent())) {
                 // 在摘要中查找包含前缀的短语
-                String[] words = paper.getAbstractContent().split("[，。；：！？\\s]+");
-                for (String word : words) {
-                    if (word.startsWith(prefix) && word.length() > prefix.length()) {
-                        suggestionsSet.add(word);
+                String[] sentences = paper.getAbstractContent().split("[，。；：！？\\s]+");
+                for (String sentence : sentences) {
+                    if (sentence.toLowerCase().contains(trimmedPrefix.toLowerCase())) {
+                        // 提取包含前缀的短语或句子
+                        int startIndex = sentence.toLowerCase().indexOf(trimmedPrefix.toLowerCase());
+                        int start = Math.max(0, startIndex - 20);
+                        int end = Math.min(sentence.length(), startIndex + trimmedPrefix.length() + 20);
+                        String phrase = sentence.substring(start, end).trim();
+                        if (phrase.length() > trimmedPrefix.length()) {
+                            suggestionsSet.add(phrase);
+                        }
                         if (suggestionsSet.size() >= suggestionSize) {
                             break;
                         }
                     }
                 }
             }
-            
+
             // 从journal_source中提取
-            if (suggestionsSet.size() < suggestionSize 
-                && StringUtils.hasText(paper.getJournal_source()) 
-                && paper.getJournal_source().startsWith(prefix)) {
+            if (suggestionsSet.size() < suggestionSize
+                    && StringUtils.hasText(paper.getJournal_source())
+                    && paper.getJournal_source().toLowerCase().contains(trimmedPrefix.toLowerCase())) {
                 suggestionsSet.add(paper.getJournal_source());
                 if (suggestionsSet.size() >= suggestionSize) {
                     break;
                 }
             }
-            
+
             // 如果已经收集到足够的建议，提前退出
             if (suggestionsSet.size() >= suggestionSize) {
                 break;
             }
         }
-        
+
         // 转换为List（保持顺序）
         List<String> suggestions = new ArrayList<>(suggestionsSet);
-        
-        // 如果建议数量不足，尝试更灵活的匹配（匹配字段中任意位置包含前缀的完整词）
-        if (suggestions.size() < suggestionSize) {
-            // 可以在这里添加更复杂的逻辑，比如提取字段中所有包含前缀的词
-            // 但为了避免过度复杂，先返回已有的结果
+
+        Function<String, String> normalize = s ->
+                s.replaceAll("[^a-zA-Z0-9]", "").toLowerCase();
+
+        Map<String, String> normalizedMap = new LinkedHashMap<>();
+        for (String suggestion : suggestions) {
+            String normalized = normalize.apply(suggestion);
+            // 如果规范化后的字符串尚未出现，或当前原始字符串更短/更简单，则保留
+            if (!normalizedMap.containsKey(normalized)) {
+                normalizedMap.put(normalized, suggestion);
+            } else {
+                // 可以选择保留较短的原始字符串
+                String existing = normalizedMap.get(normalized);
+                if (suggestion.length() < existing.length() ||
+                        suggestion.replaceAll("[^a-zA-Z0-9]", "").length() >
+                                existing.replaceAll("[^a-zA-Z0-9]", "").length()) {
+                    normalizedMap.put(normalized, suggestion);
+                }
+            }
         }
-        
-        log.info("搜索建议完成，前缀: {}, 返回建议数: {}", prefix, suggestions.size());
-        return new SearchSuggestionResponse(prefix, suggestions);
-        
+
+        List<String> deduplicated = new ArrayList<>(normalizedMap.values());
+
+        if (deduplicated.size() > suggestionSize) {
+            deduplicated = deduplicated.subList(0, suggestionSize);
+        }
+
+
+        log.info("搜索建议完成，前缀: {}, 返回建议数: {}", prefix, deduplicated.size());
+        return new SearchSuggestionResponse(prefix, deduplicated);
+
     } catch (IOException e) {
         log.error("搜索建议失败，前缀: {}, 错误信息: {}", prefix, e.getMessage(), e);
         return new SearchSuggestionResponse(prefix, new ArrayList<>());
@@ -391,5 +485,57 @@ public SearchSuggestionResponse searchSuggestions(String prefix, Integer size) {
 }
 
 
+    public Result<Object> getHotPapers(Integer size) {
+        try {
+            String key = "hot:papers:top10";
+            
+            // 获取hash结构中的所有论文数据
+            Map<Object, Object> paperHash = redisTemplate.opsForHash().entries(key);
+            
+            if (paperHash == null || paperHash.isEmpty()) {
+                log.info("Redis中没有热门论文数据");
+                return Result.ok(new ArrayList<>());
+            }
+            
+            // 限制返回数量，默认10，最大20
+            int limit = (size != null && size > 0) ? Math.min(size, 20) : 10;
+            
+            List<Paper> hotPapers = new ArrayList<>();
+            
+            // 遍历hash中的数据并反序列化为Paper对象
+            for (Map.Entry<Object, Object> entry : paperHash.entrySet()) {
+                String paperJson = (String) entry.getValue();
+                if (paperJson != null && !paperJson.isEmpty()) {
+                    try {
+                        Paper paper = objectMapper.readValue(paperJson, Paper.class);
+                        if (paper != null) {
+                            hotPapers.add(paper);
+                        }
+                    } catch (Exception e) {
+                        log.warn("反序列化Paper失败，paperJson: {}", paperJson, e);
+                    }
+                }
+            }
+            // 按read_count排序（降序）
+            hotPapers.sort((p1, p2) -> {
+                Integer count1 = p1.getRead_count();
+                Integer count2 = p2.getRead_count();
+                if (count1 == null) count1 = 0;
+                if (count2 == null) count2 = 0;
+                return count2.compareTo(count1); // 降序
+            });
+            // 限制返回数量
+            if (hotPapers.size() > limit) {
+                hotPapers = hotPapers.subList(0, limit);
+            }
+            
+            log.info("获取热门论文成功，请求数量: {}, 实际返回数量: {}", size, hotPapers.size());
+            return Result.ok(hotPapers);
+            
+        } catch (Exception e) {
+            log.error("获取热门论文失败", e);
+            return Result.fail("获取热门论文失败: " + e.getMessage());
+        }
+    }
 }
 

@@ -1,17 +1,16 @@
 package org.example.qyuanuser.controller;
 
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import jakarta.annotation.Resource;
 
-import org.springframework.web.bind.annotation.PatchMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestHeader;
-import org.springframework.web.bind.annotation.RequestMapping;
 import org.example.qyuanuser.service.UserSecurityService;
 import org.example.qyuancommon.Result;
 import org.example.qyuanuser.DTO.security.*;
 import org.example.qyuanuser.Result.CommonResult;
+
+import java.time.LocalDateTime;
+
 @RestController
 @RequestMapping("/user/security")
 public class SecurityController {
@@ -44,5 +43,15 @@ public class SecurityController {
         } catch (Exception e) {
             return Result.fail(e.getMessage());
         }
+    }
+
+    @PostMapping("/expire_time/{order_key}")
+    public void payForVIP(@RequestHeader("USER-ID") Integer user_id,
+                          @RequestParam("expire_time") LocalDateTime expire_time,
+                          @PathVariable("order_key") String order_key){
+        if(!order_key.equals("123456789123456789123456789")){
+            throw new RuntimeException("Invalid order key");
+        }
+        userSecurityService.payForVIP(user_id, expire_time, order_key);
     }
 }

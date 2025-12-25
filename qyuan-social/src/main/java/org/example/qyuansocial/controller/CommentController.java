@@ -6,14 +6,7 @@ import org.example.qyuansocial.dto.CreateCommentResponse;
 import org.example.qyuansocial.entity.Comment;
 import org.example.qyuansocial.service.CommentService;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -56,17 +49,18 @@ public class CommentController {
         return Result.ok(data, "查询成功");
     }
 
-    @GetMapping("/by-achievement/{achievementId}")
+    @GetMapping("/by-achievement/{achievementId}/{achievementType}")
     public Result<PageResponse<Comment>> listByAchievement(@PathVariable("achievementId") Long achievementId,
-                                                           @RequestParam(defaultValue = "1") int page,
-                                                           @RequestParam(defaultValue = "10") int size) {
-        PageResponse<Comment> data = commentService.listByAchievement(achievementId, page, size);
+                                                           @PathVariable("achievementType") String achievementType,
+                                                           @RequestParam(defaultValue = "1") Integer page,
+                                                           @RequestParam(defaultValue = "10") Integer size) {
+        PageResponse<Comment> data = commentService.listByAchievement(achievementId,achievementType, page, size);
         return Result.ok(data, "查询成功");
     }
 
     @PostMapping("/createLike/{commentId}")
     public Result<Map<String, Object>> likeComment(@PathVariable("commentId") Long commentId,
-                                                   @RequestParam("userId") Long userId) {
+                                                   @RequestHeader("USER-ID") Long userId) {
         boolean success = commentService.likeComment(commentId, userId);
         Map<String, Object> data = new HashMap<>();
         if (success) {
@@ -79,7 +73,7 @@ public class CommentController {
 
     @DeleteMapping("/deleteLike/{commentId}")
     public Result<Map<String, Object>> unlikeComment(@PathVariable("commentId") Long commentId,
-                                                     @RequestParam("userId") Long userId) {
+                                                     @RequestHeader("USER-ID") Long userId) {
         boolean success = commentService.unlikeComment(commentId, userId);
         Map<String, Object> data = new HashMap<>();
         if (success) {

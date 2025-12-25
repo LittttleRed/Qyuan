@@ -7,14 +7,24 @@ import org.example.qyuanuser.service.UserSecurityService;
 import org.example.qyuanuser.DTO.security.*;
 import org.example.qyuanuser.Result.CommonResult;
 import org.example.qyuanuser.entity.User;
+import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.beans.factory.annotation.Qualifier;
+
+import java.time.LocalDateTime;
 
 
 @Service
-public class UserSecurityServiceImpl extends ServiceImpl<UserMapper, User> implements UserSecurityService {
+public class    UserSecurityServiceImpl extends ServiceImpl<UserMapper, User> implements UserSecurityService {
     
     @Resource
     private UserMapper userMapper;
 
+    @Resource
+    @Qualifier("redisTemplateForCaptcha")
+    private RedisTemplate<String, String> redisTemplate;
+    private static final String USER_INFO_CACHE_PREFIX = "user:info:";
+
+    private static final int CACHE_EXPIRE_TIME = 3600; // 1小时过期时间
     @Override
     public CommonResult setNewPassword(SetNewPasswordDTO setNewPasswordDTO, int user_id) {
         CommonResult result = new CommonResult();
@@ -41,7 +51,19 @@ public class UserSecurityServiceImpl extends ServiceImpl<UserMapper, User> imple
         if (user == null) {
             throw new RuntimeException("用户不存在");
         }
-        //TODO：验证captcha
+        
+        // 验证更新密码验证码
+        String captchaKey = "captcha:update_password:" + user.getEmail();
+        String storedCaptcha = redisTemplate.opsForValue().get(captchaKey);
+        if (storedCaptcha == null || !storedCaptcha.equals(setNewPasswordDTO.getCaptcha())) {
+            result.setMessage("密码更新验证码错误或已过期");
+            result.setSuccess(false);
+            return result;
+        }
+        String userInfoKey = USER_INFO_CACHE_PREFIX + user_id;
+        redisTemplate.delete(userInfoKey);
+        // 验证码正确，删除已使用的验证码
+        redisTemplate.delete(captchaKey);
 
         //修改密码
         user.setPassword(setNewPasswordDTO.getPassword());
@@ -70,16 +92,36 @@ public class UserSecurityServiceImpl extends ServiceImpl<UserMapper, User> imple
             return result;
         }
 
-        //TODO：验证captcha
-
         //获取user
         User user = userMapper.selectById(user_id);
         if (user == null) {
             throw new RuntimeException("用户不存在");
         }
+        
+        // 验证更新邮箱验证码
+        String captchaKey = "captcha:update_email:" + setNewEmailDTO.getEmail();
+        String storedCaptcha = redisTemplate.opsForValue().get(captchaKey);
+        if (storedCaptcha == null || !storedCaptcha.equals(setNewEmailDTO.getCaptcha())) {
+            result.setMessage("邮箱更新验证码错误或已过期");
+            result.setSuccess(false);
+            return result;
+        }
+        String userInfoKey = USER_INFO_CACHE_PREFIX + user_id;
+        redisTemplate.delete(userInfoKey);
+        // 验证码正确，删除已使用的验证码
+        redisTemplate.delete(captchaKey);
+        
         user.setEmail(setNewEmailDTO.getEmail());
         userMapper.updateById(user);
         result.setSuccess(true);
         return result;
+    }
+
+    @Override
+    public void payForVIP(Integer userId, LocalDateTime expireTime, String orderKey) {
+         User user = userMapper.selectById(userId);
+         user.setExpireTime(expireTime);
+         user.setPermissionLevel(2);
+         userMapper.updateById(user);
     }
 }

@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.example.qyuanpaperrd.entity.UserPaper;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
+import org.apache.ibatis.annotations.Select;
 
 import java.util.List;
 
@@ -16,11 +17,13 @@ public interface UserPaperMapper extends BaseMapper<UserPaper> {
     /**
      * 根据用户ID查询论文关系
      */
+    @Select("SELECT * FROM user_paper WHERE user_id = #{userId}")
     List<UserPaper> selectByUserId(@Param("userId") Long userId);
 
     /**
      * 根据论文ID查询用户关系
      */
+    @Select("SELECT * FROM user_paper WHERE paper_id = #{paperId}")
     List<UserPaper> selectByPaperId(@Param("paperId") Long paperId);
 
     /**

@@ -29,3 +29,9 @@ spring:
         timeout: 10000
         username: nacos
         password: QianYuanWanMa_18
+
+minio:
+  endpoint: http://120.46.205.113:9098
+  accessKey: admin
+  secretKey: QianYuanWanMa_18
+  bucketName: audit

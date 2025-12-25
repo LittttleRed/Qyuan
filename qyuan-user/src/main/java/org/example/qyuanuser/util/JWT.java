@@ -5,6 +5,7 @@ import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 
 import javax.crypto.spec.SecretKeySpec;
+import java.nio.charset.StandardCharsets;
 import java.security.Key;
 import java.util.Base64;
 import java.util.Date;
@@ -13,8 +14,8 @@ import java.util.Map;
 
 public class JWT {
     // 密钥 - 原始字符串（至少32位）
-    private static final String SECRET = "qyuan_secret_qyuan_secret_qyuan_"; // 至少32位
-    private static final String ISS = "qyuan_iss";
+    private static final String SECRET = "123456789123456789123456789123456789"; // 至少32位
+    private static final String ISS = "qyuanIss";
     // 过期时间 24小时
     private static final long EXPIRATION = 86400L;
     
@@ -25,25 +26,22 @@ public class JWT {
      * @return JWT令牌
      */
     public static String generateJWT(Integer userId, String email) {
-        // 创建签名密钥
-        byte[] apiKeySecretBytes = Base64.getDecoder().decode(SECRET);
-        Key signingKey = new SecretKeySpec(apiKeySecretBytes, SignatureAlgorithm.HS256.getJcaName());
-        
-        // 设置载荷
+        // 直接使用字符串密钥，不要Base64解码
+        Key signingKey = new SecretKeySpec(
+                SECRET.getBytes(StandardCharsets.UTF_8),
+                SignatureAlgorithm.HS256.getJcaName()
+        );
+
         Map<String, Object> claims = new HashMap<>();
-        claims.put("userId", userId);
+        claims.put("user_id", userId);  // 改为user_id，与gateway匹配
         claims.put("email", email);
-        
-        // 设置过期时间
-        Date expirationDate = new Date(System.currentTimeMillis() + EXPIRATION * 1000);
-        
-        // 生成JWT令牌
+
         return Jwts.builder()
                 .setClaims(claims)
                 .setSubject(email)
                 .setIssuer(ISS)
                 .setIssuedAt(new Date())
-                .setExpiration(expirationDate)
+                .setExpiration(new Date(System.currentTimeMillis() + EXPIRATION * 1000))
                 .signWith(SignatureAlgorithm.HS256, signingKey)
                 .compact();
     }
@@ -54,9 +52,11 @@ public class JWT {
      * @return Claims对象
      */
     public static Claims parseJWT(String token) {
-        byte[] apiKeySecretBytes = Base64.getDecoder().decode(SECRET);
-        Key signingKey = new SecretKeySpec(apiKeySecretBytes, SignatureAlgorithm.HS256.getJcaName());
-        
+        Key signingKey = new SecretKeySpec(
+                SECRET.getBytes(StandardCharsets.UTF_8),
+                SignatureAlgorithm.HS256.getJcaName()
+        );
+
         return Jwts.parser()
                 .setSigningKey(signingKey)
                 .parseClaimsJws(token)

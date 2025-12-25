@@ -70,6 +70,11 @@ spring:
           predicates:
             - Path=/order/**
 
+        - id: ai-service-route
+          uri: lb://qyuan-ai
+          predicates:
+            - Path=/rag/**
+
 demo:
   gateway:
     auth:
@@ -77,8 +82,17 @@ demo:
         - method: GET
           paths:
             # product 相关路径
-            - /**
+            - /es/**
+            - /paper/patents/**
+            - /paper/files/**
+            - /paper/papers/**
+            - /paper/contents/**
+            - /user/auth/**
         - method: POST
           paths:
-            # user 相关路径
-            - /**
+            - /es/**
+            - /paper/patents/**
+            - /paper/files/**
+            - /paper/papers/**
+            - /paper/contents/**
+            - /user/auth/**

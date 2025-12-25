@@ -34,7 +34,7 @@ public interface CommentService {
     /**
      * 根据学术成果ID分页查询评论
      */
-    org.example.qyuansocial.common.PageResponse<Comment> listByAchievement(Long achievementId, int page, int size);
+    org.example.qyuansocial.common.PageResponse<Comment> listByAchievement(Long achievementId,String achievementType, int page, int size);
 
     /**
      * 点赞评论（幂等地忽略不存在的评论）
