@@ -1,0 +1,95 @@
+# Deployment for qyuan-user service
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: qyuan-user-deployment
+  labels:
+    app: qyuan-user
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: qyuan-user
+  template:
+    metadata:
+      labels:
+        app: qyuan-user
+    spec:
+      containers:
+      - name: qyuan-user
+        image: qyuan-user:latest
+        ports:
+        - containerPort: 8080
+          name: http
+        env:
+        - name: SPRING_PROFILES_ACTIVE
+          value: "k8s"
+        - name: NACOS_ADDR
+          value: "nacos-service:8848"
+        - name: MYSQL_HOST
+          value: "mysql-service"
+        - name: MYSQL_PORT
+          value: "3306"
+        - name: REDIS_HOST
+          value: "redis-service"
+        - name: REDIS_PORT
+          value: "6379"
+        resources:
+          requests:
+            memory: "512Mi"
+            cpu: "250m"
+          limits:
+            memory: "1Gi"
+            cpu: "500m"
+        livenessProbe:
+          httpGet:
+            path: /actuator/health
+            port: 8080
+          initialDelaySeconds: 120
+          periodSeconds: 30
+        readinessProbe:
+          httpGet:
+            path: /actuator/health
+            port: 8080
+          initialDelaySeconds: 30
+          periodSeconds: 10
+---
+# Service for qyuan-user
+apiVersion: v1
+kind: Service
+metadata:
+  name: qyuan-user-service
+spec:
+  selector:
+    app: qyuan-user
+  ports:
+    - protocol: TCP
+      port: 8080
+      targetPort: 8080
+  type: ClusterIP
+---
+# ConfigMap for application configuration
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: qyuan-user-config
+data:
+  application-k8s.yml: |
+    spring:
+      datasource:
+        url: jdbc:mysql://${MYSQL_HOST:localhost}:${MYSQL_PORT:3306}/qyuan_user?useUnicode=true&characterEncoding=utf8&useSSL=false&allowPublicKeyRetrieval=true
+        username: ${MYSQL_USER:root}
+        password: ${MYSQL_PASSWORD:password}
+        driver-class-name: com.mysql.cj.jdbc.Driver
+      redis:
+        host: ${REDIS_HOST:localhost}
+        port: ${REDIS_PORT:6379}
+        timeout: 5000ms
+        lettuce:
+          pool:
+            max-active: 20
+            max-idle: 10
+            min-idle: 5
+    nacos:
+      discovery:
+        server-addr: ${NACOS_ADDR:localhost:8848}

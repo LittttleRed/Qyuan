@@ -12,6 +12,6 @@ public class UpdatePersonalInfoDTO {
     private String orcid;
 
     public boolean isFull() {
-        return username != null && first_name != null && last_name != null && institution != null && research_direction != null;
+        return username != null && first_name != null && last_name != null && institution != null && research_direction != null && orcid != null;
     }
 }

@@ -1,7 +1,6 @@
 package org.example.qyuanuser.controller;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.example.qyuancommon.Result;
@@ -64,7 +63,7 @@ public class AuthController {
         try {
             CommonResult result = userAuthService.sendCaptcha(sendCaptchaDTO);
             if(result.isSuccess()){
-                return Result.ok(result);
+                return Result.ok();
             } else {
                 return Result.fail(result.getMessage());
             }

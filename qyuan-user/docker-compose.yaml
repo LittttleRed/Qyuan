@@ -1,0 +1,68 @@
+version: '3.8'
+
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: qyuan-mysql
+    ports:
+      - "3306:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpassword
+      MYSQL_DATABASE: qyuan_user
+      MYSQL_USER: qyuan
+      MYSQL_PASSWORD: qyuandbpassword
+    volumes:
+      - mysql_data:/var/lib/mysql
+    networks:
+      - qyuan-network
+
+  redis:
+    image: redis:7-alpine
+    container_name: qyuan-redis
+    ports:
+      - "6379:6379"
+    networks:
+      - qyuan-network
+
+  nacos:
+    image: nacos/nacos-server:v2.2.0
+    container_name: qyuan-nacos
+    ports:
+      - "8848:8848"
+    environment:
+      MODE: "standalone"
+      NACOS_APPLICATION_PORT: "8848"
+      PREFER_HOST_MODE: "hostname"
+    networks:
+      - qyuan-network
+
+  qyuan-user:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: qyuan-user
+    ports:
+      - "8080:8080"
+    depends_on:
+      - mysql
+      - redis
+      - nacos
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+      NACOS_ADDR: nacos:8848
+      MYSQL_HOST: mysql
+      MYSQL_PORT: 3306
+      MYSQL_USER: qyuan
+      MYSQL_PASSWORD: qyuandbpassword
+      MYSQL_DATABASE: qyuan_user
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+    networks:
+      - qyuan-network
+
+volumes:
+  mysql_data:
+
+networks:
+  qyuan-network:
+    driver: bridge

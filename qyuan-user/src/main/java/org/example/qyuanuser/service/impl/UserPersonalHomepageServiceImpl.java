@@ -1,8 +1,6 @@
 package org.example.qyuanuser.service.impl;
 
 import com.alibaba.fastjson2.JSONObject;
-import io.minio.MinioClient;
-import netscape.javascript.JSObject;
 import org.example.qyuancommon.Result;
 import org.example.qyuanuser.service.MinioService;
 import org.example.qyuanuser.service.UserPersonalHomepageService;
@@ -16,7 +14,6 @@ import org.example.qyuanuser.Result.CommonResult;
 import org.springframework.stereotype.Service;
 import org.example.qyuanuser.Result.VIPStateResult;
 import org.springframework.data.redis.core.RedisTemplate;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.util.ArrayList;
