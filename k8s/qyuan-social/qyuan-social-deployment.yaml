@@ -17,13 +17,13 @@ spec:
     spec:
       containers:
         - name: qyuan-social
-          image: your-registry/qyuan-social:1.0.0
+          image: qyuan-social:latest
           imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 9001
           env:
             - name: NACOS_IP
-              value: "nacos.example.com"
+              value: "nacos-service"
             - name: NACOS_PORT
               value: "8848"
             - name: NACOS_NAMESPACE
