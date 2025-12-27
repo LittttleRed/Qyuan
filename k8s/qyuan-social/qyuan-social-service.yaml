@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: qyuan-social
+  namespace: qyuan
+  labels:
+    app: qyuan-social
+spec:
+  type: ClusterIP
+  selector:
+    app: qyuan-social
+  ports:
+    - name: http
+      port: 9001        # Service 暴露端口
+      targetPort: 9001  # 容器内端口
