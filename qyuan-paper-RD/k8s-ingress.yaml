@@ -1,0 +1,34 @@
+# Ingress for external access to qyuan-paper-RD
+# This requires an Ingress controller (e.g., NGINX, Traefik) to be installed
+
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: qyuan-paper-rd-ingress
+  namespace: qyuan-paper-rd
+  annotations:
+    # NGINX Ingress Controller annotations
+    nginx.ingress.kubernetes.io/rewrite-target: /
+    nginx.ingress.kubernetes.io/ssl-redirect: "false"
+    # For production with HTTPS:
+    # nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    # cert-manager.io/cluster-issuer: "letsencrypt-prod"
+spec:
+  ingressClassName: nginx
+  rules:
+  - host: qyuan-paper-rd.local # Change to your domain
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: qyuan-paper-rd-service
+            port:
+              number: 9003
+  # For TLS/HTTPS (uncomment and configure):
+  # tls:
+  # - hosts:
+  #   - qyuan-paper-rd.yourdomain.com
+  #   secretName: qyuan-paper-rd-tls

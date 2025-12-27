@@ -1,27 +1,27 @@
 # 构建阶段：使用Maven和OpenJDK 17
-FROM maven:3.8-openjdk-17-slim AS builder
+FROM docker.io/library/maven:3.8-openjdk-17-slim AS builder
 
 # 设置工作目录
-WORKDIR /app
+WORKDIR /build
 
-# 复制pom.xml和源代码
-COPY pom.xml .
-COPY src ./src
+# 复制整个父项目（包含父POM和相关模块）
+COPY . .
 
-# 构建应用（跳过测试）
-RUN mvn clean package -DskipTests
+# 构建应用（跳过测试，只构建 qyuan-paper-RD 模块）
+RUN mvn clean package -pl qyuan-paper-RD -am -DskipTests && \
+    ls -lh qyuan-paper-RD/target/*.jar
 
 # 运行阶段：使用JRE运行
-FROM eclipse-temurin:17-jre
+FROM docker.io/library/eclipse-temurin:17-jre
 
 # 设置工作目录
 WORKDIR /app
 
 # 从构建阶段复制JAR文件
-COPY --from=builder /app/target/*.jar app.jar
+COPY --from=builder /build/qyuan-paper-RD/target/*.jar app.jar
 
-# 暴露端口（Spring Boot默认8080）
-EXPOSE 8080
+# 暴露端口（Spring Boot端口9003）
+EXPOSE 9003
 
 # 设置JVM参数（可根据需要调整）
 ENV JAVA_OPTS=""
