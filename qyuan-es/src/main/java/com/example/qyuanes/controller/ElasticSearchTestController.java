@@ -3,6 +3,9 @@ package com.example.qyuanes.controller;
 import com.example.qyuanes.dto.HotSearchResponse;
 import com.example.qyuanes.dto.PaperSearchRequest;
 import com.example.qyuanes.dto.PaperSearchResponse;
+import com.example.qyuanes.dto.SimpleSearchRequest;
+import com.example.qyuanes.dto.PatentSearchResponse;
+import com.example.qyuanes.dto.JournalSearchResponse;
 import com.example.qyuanes.dto.SearchSuggestionResponse;
 import com.example.qyuanes.entity.Paper;
 import com.example.qyuanes.service.ElasticSearchService;
@@ -162,6 +165,48 @@ public Result<HotSearchResponse> getHotSearches(
 
     Result<Object> response = elasticSearchService.getHotPapers(size);
     return Result.ok(response, "获取热门论文成功");
+}
+
+/**
+ * 搜索专利接口
+ * 只支持关键词搜索
+ *
+ * GET /es/patent/search?keyword=人工智能&page=0&size=10
+ */
+@GetMapping("/patent/search")
+public Result<PatentSearchResponse> searchPatents(
+        @RequestParam(required = false) String keyword,
+        @RequestParam(required = false, defaultValue = "0") Integer page,
+        @RequestParam(required = false, defaultValue = "10") Integer size) {
+    
+    SimpleSearchRequest request = new SimpleSearchRequest();
+    request.setKeyword(keyword);
+    request.setPage(page);
+    request.setSize(size);
+    
+    PatentSearchResponse response = elasticSearchService.searchPatents(request);
+    return Result.ok(response, "搜索专利成功");
+}
+
+/**
+ * 搜索期刊接口
+ * 只支持关键词搜索
+ *
+ * GET /es/journal/search?keyword=Nature&page=0&size=10
+ */
+@GetMapping("/journal/search")
+public Result<JournalSearchResponse> searchJournals(
+        @RequestParam(required = false) String keyword,
+        @RequestParam(required = false, defaultValue = "0") Integer page,
+        @RequestParam(required = false, defaultValue = "10") Integer size) {
+    
+    SimpleSearchRequest request = new SimpleSearchRequest();
+    request.setKeyword(keyword);
+    request.setPage(page);
+    request.setSize(size);
+    
+    JournalSearchResponse response = elasticSearchService.searchJournals(request);
+    return Result.ok(response, "搜索期刊成功");
 }
 
 

@@ -93,7 +93,7 @@ public class PaperSearchRequest {
     // ========== 排序参数 ==========
     /**
      * 排序字段
-     * 可选值：updated, read_count, favoriate_count, paper_id
+     * 可选值：updated, read_count, favorite_count, paper_id
      */
     private String sortField = "updated";
     /**

@@ -3,8 +3,15 @@ package com.example.qyuanes.service;
 import com.example.qyuanes.dto.PaperSearchRequest;
 import com.example.qyuanes.dto.PaperSearchResponse;
 import com.example.qyuanes.dto.PaperWithHighlight;
+import com.example.qyuanes.dto.SimpleSearchRequest;
+import com.example.qyuanes.dto.PatentSearchResponse;
+import com.example.qyuanes.dto.PatentWithHighlight;
+import com.example.qyuanes.dto.JournalSearchResponse;
+import com.example.qyuanes.dto.JournalWithHighlight;
 import com.example.qyuanes.dto.SearchSuggestionResponse;
 import com.example.qyuanes.entity.Paper;
+import com.example.qyuanes.entity.Patent;
+import com.example.qyuanes.entity.Journal;
 import co.elastic.clients.elasticsearch.ElasticsearchClient;
 import co.elastic.clients.elasticsearch._types.SortOrder;
 import co.elastic.clients.elasticsearch._types.query_dsl.BoolQuery;
@@ -50,7 +57,9 @@ public class ElasticSearchService {
     private com.fasterxml.jackson.databind.ObjectMapper objectMapper;
 
     // 索引名称常量
-    private static final String INDEX_NAME = "papers";
+    private static final String PAPER_INDEX_NAME = "papers";
+    private static final String PATENT_INDEX_NAME = "patents";
+    private static final String JOURNAL_INDEX_NAME = "journals";
 
     
 /**
@@ -87,7 +96,7 @@ public PaperSearchResponse searchPapers(PaperSearchRequest request) {
         // ========== 5. 执行搜索 ==========
         SearchResponse<Paper> response = elasticsearchClient.search(s -> {
             var searchBuilder = s
-                    .index(INDEX_NAME)
+                    .index(PAPER_INDEX_NAME)
                     .query(query)  // query已经包含了boost权重，会产生_score
                     .from(request.getPage() * request.getSize())
                     .size(request.getSize())
@@ -365,7 +374,7 @@ private PaperSearchResponse buildEmptyResponse(PaperSearchRequest request) {
 
         // ========== 3. 执行搜索 ==========
         SearchResponse<Paper> response = elasticsearchClient.search(s -> s
-                        .index(INDEX_NAME)
+                        .index(PAPER_INDEX_NAME)
                         .query(query)
                         .size(suggestionSize * 5)  // 多查询一些，后续去重和筛选
                         .sort(sort -> sort
@@ -536,6 +545,244 @@ private PaperSearchResponse buildEmptyResponse(PaperSearchRequest request) {
             log.error("获取热门论文失败", e);
             return Result.fail("获取热门论文失败: " + e.getMessage());
         }
+    }
+    
+    /**
+     * 搜索专利（只支持关键词搜索）
+     *
+     * @param request 搜索请求（只包含keyword、page、size）
+     * @return 搜索结果
+     */
+    public PatentSearchResponse searchPatents(SimpleSearchRequest request) {
+        try {
+            // ========== 1. 参数校验和默认值设置 ==========
+            if (request.getPage() == null || request.getPage() < 0) {
+                request.setPage(0);
+            }
+            if (request.getSize() == null || request.getSize() < 1) {
+                request.setSize(10);
+            }
+            if (request.getSize() > 100) {
+                request.setSize(100);
+            }
+            
+            // ========== 2. 构建查询对象 ==========
+            Query query = PatentQueryBuilder.buildQuery(request);
+            
+            // ========== 3. 构建高亮配置 ==========
+            boolean needHighlight = StringUtils.hasText(request.getKeyword());
+            
+            // ========== 4. 执行搜索 ==========
+            SearchResponse<Patent> response = elasticsearchClient.search(s -> {
+                var searchBuilder = s
+                    .index(PATENT_INDEX_NAME)
+                    .query(query)
+                    .from(request.getPage() * request.getSize())
+                    .size(request.getSize())
+                    .trackTotalHits(th -> th.enabled(true));
+                
+                // 如果有关键词搜索，添加高亮配置
+                if (needHighlight) {
+                    searchBuilder.highlight(h -> h
+                        .preTags("<em>")
+                        .postTags("</em>")
+                        .fields("patent_name", f -> f
+                            .numberOfFragments(1)
+                            .fragmentSize(150)
+                            .requireFieldMatch(true)
+                        )
+                        .fields("abstract", f -> f
+                            .numberOfFragments(3)
+                            .fragmentSize(200)
+                            .requireFieldMatch(true)
+                        )
+                    );
+                }
+                
+                return searchBuilder;
+            }, Patent.class);
+            
+            // ========== 5. 处理搜索结果 ==========
+            return buildPatentSearchResponse(response, request, needHighlight);
+            
+        } catch (IOException e) {
+            log.error("搜索专利失败，请求参数: {}, 错误信息: {}", request, e.getMessage(), e);
+            return buildEmptyPatentResponse(request);
+        } catch (Exception e) {
+            log.error("搜索专利时发生未知错误，请求参数: {}, 错误信息: {}", request, e.getMessage(), e);
+            return buildEmptyPatentResponse(request);
+        }
+    }
+    
+    /**
+     * 搜索期刊（只支持关键词搜索）
+     *
+     * @param request 搜索请求（只包含keyword、page、size）
+     * @return 搜索结果
+     */
+    public JournalSearchResponse searchJournals(SimpleSearchRequest request) {
+        try {
+            // ========== 1. 参数校验和默认值设置 ==========
+            if (request.getPage() == null || request.getPage() < 0) {
+                request.setPage(0);
+            }
+            if (request.getSize() == null || request.getSize() < 1) {
+                request.setSize(10);
+            }
+            if (request.getSize() > 100) {
+                request.setSize(100);
+            }
+            
+            // ========== 2. 构建查询对象 ==========
+            Query query = JournalQueryBuilder.buildQuery(request);
+            
+            // ========== 3. 构建高亮配置 ==========
+            boolean needHighlight = StringUtils.hasText(request.getKeyword());
+            
+            // ========== 4. 执行搜索 ==========
+            SearchResponse<Journal> response = elasticsearchClient.search(s -> {
+                var searchBuilder = s
+                    .index(JOURNAL_INDEX_NAME)
+                    .query(query)
+                    .from(request.getPage() * request.getSize())
+                    .size(request.getSize())
+                    .trackTotalHits(th -> th.enabled(true));
+                
+                // 如果有关键词搜索，添加高亮配置
+                if (needHighlight) {
+                    searchBuilder.highlight(h -> h
+                        .preTags("<em>")
+                        .postTags("</em>")
+                        .fields("journal_name", f -> f
+                            .numberOfFragments(1)
+                            .fragmentSize(150)
+                            .requireFieldMatch(true)
+                        )
+                        .fields("keywords", f -> f
+                            .numberOfFragments(2)
+                            .fragmentSize(200)
+                            .requireFieldMatch(true)
+                        )
+                    );
+                }
+                
+                return searchBuilder;
+            }, Journal.class);
+            
+            // ========== 5. 处理搜索结果 ==========
+            return buildJournalSearchResponse(response, request, needHighlight);
+            
+        } catch (IOException e) {
+            log.error("搜索期刊失败，请求参数: {}, 错误信息: {}", request, e.getMessage(), e);
+            return buildEmptyJournalResponse(request);
+        } catch (Exception e) {
+            log.error("搜索期刊时发生未知错误，请求参数: {}, 错误信息: {}", request, e.getMessage(), e);
+            return buildEmptyJournalResponse(request);
+        }
+    }
+    
+    /**
+     * 构建专利搜索响应对象（带高亮）
+     */
+    private PatentSearchResponse buildPatentSearchResponse(SearchResponse<Patent> response, SimpleSearchRequest request, boolean needHighlight) {
+        List<PatentWithHighlight> patentsWithHighlight = response.hits().hits().stream()
+            .map(hit -> {
+                Patent patent = hit.source();
+                if (patent == null) {
+                    return null;
+                }
+                
+                PatentWithHighlight patentWithHighlight = new PatentWithHighlight(patent);
+                
+                if (needHighlight && hit.highlight() != null) {
+                    Map<String, List<String>> highlightMap = hit.highlight();
+                    for (Map.Entry<String, List<String>> entry : highlightMap.entrySet()) {
+                        patentWithHighlight.addHighlights(entry.getKey(), entry.getValue());
+                    }
+                }
+                
+                return patentWithHighlight;
+            })
+            .filter(Objects::nonNull)
+            .collect(Collectors.toList());
+        
+        long total = response.hits().total().value();
+        int totalPages = (int) Math.ceil((double) total / request.getSize());
+        
+        PatentSearchResponse searchResponse = new PatentSearchResponse();
+        searchResponse.setPatents(patentsWithHighlight);
+        searchResponse.setTotal(total);
+        searchResponse.setPage(request.getPage());
+        searchResponse.setSize(request.getSize());
+        searchResponse.setTotalPages(totalPages);
+        
+        log.info("搜索专利成功，关键词: {}, 结果数: {}/{}", request.getKeyword(), patentsWithHighlight.size(), total);
+        return searchResponse;
+    }
+    
+    /**
+     * 构建期刊搜索响应对象（带高亮）
+     */
+    private JournalSearchResponse buildJournalSearchResponse(SearchResponse<Journal> response, SimpleSearchRequest request, boolean needHighlight) {
+        List<JournalWithHighlight> journalsWithHighlight = response.hits().hits().stream()
+            .map(hit -> {
+                Journal journal = hit.source();
+                if (journal == null) {
+                    return null;
+                }
+                
+                JournalWithHighlight journalWithHighlight = new JournalWithHighlight(journal);
+                
+                if (needHighlight && hit.highlight() != null) {
+                    Map<String, List<String>> highlightMap = hit.highlight();
+                    for (Map.Entry<String, List<String>> entry : highlightMap.entrySet()) {
+                        journalWithHighlight.addHighlights(entry.getKey(), entry.getValue());
+                    }
+                }
+                
+                return journalWithHighlight;
+            })
+            .filter(Objects::nonNull)
+            .collect(Collectors.toList());
+        
+        long total = response.hits().total().value();
+        int totalPages = (int) Math.ceil((double) total / request.getSize());
+        
+        JournalSearchResponse searchResponse = new JournalSearchResponse();
+        searchResponse.setJournals(journalsWithHighlight);
+        searchResponse.setTotal(total);
+        searchResponse.setPage(request.getPage());
+        searchResponse.setSize(request.getSize());
+        searchResponse.setTotalPages(totalPages);
+        
+        log.info("搜索期刊成功，关键词: {}, 结果数: {}/{}", request.getKeyword(), journalsWithHighlight.size(), total);
+        return searchResponse;
+    }
+    
+    /**
+     * 构建空专利响应（异常情况）
+     */
+    private PatentSearchResponse buildEmptyPatentResponse(SimpleSearchRequest request) {
+        PatentSearchResponse response = new PatentSearchResponse();
+        response.setPatents(new ArrayList<>());
+        response.setTotal(0L);
+        response.setPage(request.getPage());
+        response.setSize(request.getSize());
+        response.setTotalPages(0);
+        return response;
+    }
+    
+    /**
+     * 构建空期刊响应（异常情况）
+     */
+    private JournalSearchResponse buildEmptyJournalResponse(SimpleSearchRequest request) {
+        JournalSearchResponse response = new JournalSearchResponse();
+        response.setJournals(new ArrayList<>());
+        response.setTotal(0L);
+        response.setPage(request.getPage());
+        response.setSize(request.getSize());
+        response.setTotalPages(0);
+        return response;
     }
 }
 

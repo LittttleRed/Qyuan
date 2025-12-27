@@ -57,7 +57,7 @@ public class Paper {
     @JsonProperty("read_count")
     private Integer read_count;
 
-    @JsonProperty("favoriate_count")
-    private Integer favoriate_count;
+    @JsonProperty("favorite_count")
+    private Integer favorite_count;
 }   
 
