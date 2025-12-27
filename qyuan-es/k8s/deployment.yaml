@@ -1,0 +1,59 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: qyuan-es
+  namespace: default
+  labels:
+    app: qyuan-es
+    version: v1
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: qyuan-es
+  template:
+    metadata:
+      labels:
+        app: qyuan-es
+        version: v1
+    spec:
+      containers:
+      - name: qyuan-es
+        image: qyuan-es:latest
+        imagePullPolicy: IfNotPresent
+        ports:
+        - containerPort: 9006
+          name: http
+          protocol: TCP
+        env:
+        - name: NACOS_IP
+          value: "nacos-service"
+        - name: NACOS_PORT
+          value: "8848"
+        - name: NACOS_NAMESPACE
+          value: "dev"
+        resources:
+          requests:
+            memory: "512Mi"
+            cpu: "500m"
+          limits:
+            memory: "1Gi"
+            cpu: "1000m"
+        livenessProbe:
+          httpGet:
+            path: /actuator/health
+            port: 9006
+          initialDelaySeconds: 60
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
+        readinessProbe:
+          httpGet:
+            path: /actuator/health
+            port: 9006
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
+      restartPolicy: Always
+
