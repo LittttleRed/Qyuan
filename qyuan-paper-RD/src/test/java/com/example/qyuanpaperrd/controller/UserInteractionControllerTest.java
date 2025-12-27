@@ -45,8 +45,8 @@ class UserInteractionControllerTest {
     void setUp() {
         mockClaimRequest = new ClaimRequest();
         mockClaimRequest.setPaperId(1L);
-        mockClaimRequest.setClaimDescription("I am author");
-        mockClaimRequest.setClaimPicture("Evidence picture");
+        // claimPicture 是 MultipartFile 类型，需要 mock 对象
+        // 在实际测试中应该使用 MockMultipartFile
     }
 
     @Test

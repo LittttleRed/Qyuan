@@ -1,12 +1,12 @@
 services:
   redis:
-    image: redis:7-alpine
+    image: docker.io/library/redis:7-alpine
     container_name: qyuan-redis
     ports:
       - "6379:6379"
     volumes:
       - redis-data:/data
-    command: redis-server --appendonly yes
+    command: redis-server --appendonly yes --maxmemory-policy allkeys-lru
     networks:
       - default
     restart: unless-stopped
@@ -17,21 +17,46 @@ services:
       retries: 3
 
   qyuan-paper-rd:
-    build: .
+    build:
+      context: ..
+      dockerfile: qyuan-paper-RD/Dockerfile
     container_name: qyuan-paper-rd
     ports:
-      - "8080:8080"
+      - "9003:9003"
     environment:
+      # Redis 配置
       REDIS_HOST: redis
       REDIS_PORT: 6379
       REDIS_DATABASE: 0
+
+      # Nacos 配置
+      NACOS_IP: "123.57.145.79"
+      NACOS_PORT: "8848"
+      NACOS_NAMESPACE: "c0d42ad8-9d65-4b0a-aa97-1af2c0d0a3f8"
+
+      # 华为云 OBS 配置
+      HUAWEICLOUD_SDK_ENDPOINT: "obs.cn-north-4.myhuaweicloud.com"
+      HUAWEICLOUD_SDK_AK: "HPUAE1MAHBIWWPY6YXFT"
+      HUAWEICLOUD_SDK_SK: "3vxHO43y0ZRHWogP73gtqZ2H5fQKatB0KPmEwcBZ"
+      HUAWEICLOUD_SDK_BUCKET_NAME: "bucket-pdf-74a6"
+
+      # JVM 参数
       JAVA_OPTS: "-Xmx512m -Xms256m"
+
+      # Spring profile
+      SPRING_PROFILES_ACTIVE: "dev"
     depends_on:
       redis:
         condition: service_healthy
     networks:
       - default
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9003/actuator/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
 
 networks:
   default:

@@ -28,5 +28,5 @@ public interface ClaimService extends IService<Claim> {
 
     void updateClaim(Long claim_id,Integer status,Long user_id,Long paper_id);
 
-    PageResult<Claim> getAllClaims(Integer page, Integer size,Integer status);
+    PageResult<Claim> getAllClaims(Integer page, Integer size,Integer  status);
 }

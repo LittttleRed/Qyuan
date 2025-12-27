@@ -18,6 +18,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.method.P;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -114,9 +115,10 @@ public class UserInteractionController {
             @RequestParam(defaultValue = "20") @Min(1) Integer size,
 
             @Parameter(description = "认领状态")
-            @RequestParam(required = false) Integer status) {
+            @RequestParam(required = false) Integer status
+    ) {
         try {
-            PageResult<Claim> result = claimService.getAllClaims(page, size,status);
+            PageResult<Claim> result = claimService.getAllClaims(page, size, status);
             return ResponseEntity.ok(Result.success(result));
         } catch (Exception e) {
             log.error("获取认领记录失败", e);

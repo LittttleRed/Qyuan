@@ -1,0 +1,198 @@
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: qyuan-paper-rd
+
+---
+# ConfigMap for non-sensitive configuration
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: qyuan-paper-rd-config
+  namespace: qyuan-paper-rd
+data:
+  SPRING_PROFILES_ACTIVE: "dev"
+  REDIS_HOST: "redis-service"
+  REDIS_PORT: "6379"
+  REDIS_DATABASE: "0"
+  NACOS_IP: "123.57.145.79"
+  NACOS_PORT: "8848"
+  NACOS_NAMESPACE: "c0d42ad8-9d65-4b0a-aa97-1af2c0d0a3f8"
+  HUAWEICLOUD_SDK_ENDPOINT: "obs.cn-north-4.myhuaweicloud.com"
+  HUAWEICLOUD_SDK_BUCKET_NAME: "bucket-pdf-74a6"
+  JAVA_OPTS: "-Xmx512m -Xms256m"
+
+---
+# Secret for sensitive data
+apiVersion: v1
+kind: Secret
+metadata:
+  name: qyuan-paper-rd-secret
+  namespace: qyuan-paper-rd
+type: Opaque
+stringData:
+  HUAWEICLOUD_SDK_AK: "HPUAE1MAHBIWWPY6YXFT"
+  HUAWEICLOUD_SDK_SK: "3vxHO43y0ZRHWogP73gtqZ2H5fQKatB0KPmEwcBZ"
+
+---
+# PersistentVolumeClaim for Redis
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: redis-data-pvc
+  namespace: qyuan-paper-rd
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi
+  storageClassName: standard # Adjust based on your cluster
+
+---
+# Deployment for Redis
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: redis
+  namespace: qyuan-paper-rd
+  labels:
+    app: redis
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: redis
+  template:
+    metadata:
+      labels:
+        app: redis
+    spec:
+      containers:
+        - name: redis
+          image: docker.io/library/redis:7-alpine
+          imagePullPolicy: IfNotPresent
+          args:
+            - redis-server
+            - --appendonly
+            - "yes"
+            - --maxmemory-policy
+            - allkeys-lru
+          ports:
+            - containerPort: 6379
+          volumeMounts:
+            - name: redis-data
+              mountPath: /data
+          resources:
+            requests:
+              memory: "128Mi"
+              cpu: "100m"
+            limits:
+              memory: "256Mi"
+              cpu: "200m"
+          livenessProbe:
+            exec:
+              command:
+                - redis-cli
+                - ping
+            initialDelaySeconds: 30
+            periodSeconds: 10
+          readinessProbe:
+            exec:
+              command:
+                - redis-cli
+                - ping
+            initialDelaySeconds: 5
+            periodSeconds: 5
+      volumes:
+        - name: redis-data
+          persistentVolumeClaim:
+            claimName: redis-data-pvc
+
+---
+# Service for Redis
+apiVersion: v1
+kind: Service
+metadata:
+  name: redis-service
+  namespace: qyuan-paper-rd
+spec:
+  selector:
+    app: redis
+  ports:
+    - port: 6379
+      targetPort: 6379
+  type: ClusterIP
+
+---
+# Deployment for qyuan-paper-RD application
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: qyuan-paper-rd
+  namespace: qyuan-paper-rd
+  labels:
+    app: qyuan-paper-rd
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: qyuan-paper-rd
+  template:
+    metadata:
+      labels:
+        app: qyuan-paper-rd
+    spec:
+      containers:
+        - name: qyuan-paper-rd
+          image: localhost/qyuan-paper-rd_qyuan-paper-rd:latest
+          imagePullPolicy: IfNotPresent
+          # For production, replace with your registry:
+          # image: your-registry/qyuan-paper-rd:latest
+          ports:
+            - containerPort: 9003
+          envFrom:
+            - configMapRef:
+                name: qyuan-paper-rd-config
+            - secretRef:
+                name: qyuan-paper-rd-secret
+          resources:
+            requests:
+              memory: "512Mi"
+              cpu: "250m"
+            limits:
+              memory: "1Gi"
+              cpu: "500m"
+          livenessProbe:
+            httpGet:
+              path: /actuator/health
+              port: 9003
+            initialDelaySeconds: 60
+            periodSeconds: 30
+            timeoutSeconds: 10
+            failureThreshold: 3
+          readinessProbe:
+            httpGet:
+              path: /actuator/health
+              port: 9003
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 3
+
+---
+# Service for qyuan-paper-RD application
+apiVersion: v1
+kind: Service
+metadata:
+  name: qyuan-paper-rd-service
+  namespace: qyuan-paper-rd
+spec:
+  selector:
+    app: qyuan-paper-rd
+  ports:
+    - port: 9003
+      targetPort: 9003
+      protocol: TCP
+  type: LoadBalancer # Change to NodePort or Ingress based on your setup
