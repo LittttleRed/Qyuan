@@ -6,6 +6,7 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import org.example.qyuansocial.common.PageResponse;
 import org.example.qyuansocial.entity.Follow;
 import org.example.qyuansocial.mapper.FollowMapper;
+
 import org.example.qyuansocial.service.FollowService;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
@@ -103,6 +104,10 @@ public class FollowServiceImpl extends ServiceImpl<FollowMapper, Follow> impleme
                 KEY_FOLLOWERS_PREFIX + follow.getFollowedId(),
                 String.valueOf(follow.getFollowerId())
         );
+        
+//        // 清除相关的关注数量缓存，使下次查询时重新计算
+//        stringRedisTemplate.delete(KEY_FOLLOWINGS_PREFIX + follow.getFollowerId());
+//        stringRedisTemplate.delete(KEY_FOLLOWERS_PREFIX + follow.getFollowedId());
 
         return follow.getFollowId();
     }
@@ -128,6 +133,39 @@ public class FollowServiceImpl extends ServiceImpl<FollowMapper, Follow> impleme
                     KEY_FOLLOWERS_PREFIX + existingFollow.getFollowedId(),
                     String.valueOf(existingFollow.getFollowerId())
             );
+        }
+        return removed;
+    }
+
+    @Override
+    public boolean cancelFollowByUserIds(Long followerId, Long followedId) {
+        // 构建查询条件：根据关注者ID和被关注者ID查询关注关系
+        QueryWrapper<Follow> queryWrapper = new QueryWrapper<>();
+        queryWrapper.eq("follower_id", followerId)
+                   .eq("followed_id", followedId);
+        
+        Follow existingFollow = this.getOne(queryWrapper);
+        if (existingFollow == null) {
+            // 不存在关注关系，返回true（幂等操作：重复取消关注视为成功）
+            return true;
+        }
+
+        // 删除关注关系（先删库）
+        boolean removed = this.remove(queryWrapper);
+        if (removed) {
+            // 再从 Redis 中移除对应关系
+            stringRedisTemplate.opsForSet().remove(
+                    KEY_FOLLOWINGS_PREFIX + followerId,
+                    String.valueOf(followedId)
+            );
+            stringRedisTemplate.opsForSet().remove(
+                    KEY_FOLLOWERS_PREFIX + followedId,
+                    String.valueOf(followerId)
+            );
+            
+            // 清除相关的关注数量缓存，使下次查询时重新计算
+//            stringRedisTemplate.delete(KEY_FOLLOWINGS_PREFIX + followerId);
+//            stringRedisTemplate.delete(KEY_FOLLOWERS_PREFIX + followedId);
         }
         return removed;
     }

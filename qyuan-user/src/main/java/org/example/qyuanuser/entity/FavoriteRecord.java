@@ -6,7 +6,7 @@ import lombok.NoArgsConstructor;
 
 @Data
 @NoArgsConstructor
-@TableName("favoriteRecord")
+@TableName("favorite_record")
 public class FavoriteRecord {
     
     @TableId(type = IdType.AUTO)

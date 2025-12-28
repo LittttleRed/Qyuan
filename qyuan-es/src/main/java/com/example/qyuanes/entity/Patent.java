@@ -16,6 +16,8 @@ import java.time.OffsetDateTime;
 @AllArgsConstructor // Lombok注解：自动生成全参构造函数
 @JsonIgnoreProperties(ignoreUnknown = true)  // 忽略JSON中未知的字段
 public class Patent {
+    @JsonProperty("patent_id")
+    private Integer patent_id;
     @JsonProperty("patent_number")
     private String patent_number;
     @JsonProperty("patent_name")

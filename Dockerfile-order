@@ -1,0 +1,34 @@
+# 构建阶段：使用Maven和OpenJDK 17
+FROM 192.168.0.7:5000/library/maven:3.8-openjdk-17-slim AS builder
+
+# 设置工作目录
+WORKDIR /build
+
+# 复制整个项目（包括父POM）
+COPY . .
+
+# 先安装父POM和公共模块到本地仓库
+RUN mvn clean install -DskipTests -N && \
+    mvn clean install -DskipTests -pl qyuan-common
+
+# 构建应用（跳过测试，只构建 qyuan-paper-RD 模块及其依赖）
+RUN mvn clean package -pl qyuan-order -am -DskipTests && \
+    ls -lh qyuan-order/target/*.jar
+
+# 运行阶段：使用JRE运行
+FROM 192.168.0.7:5000/library/eclipse-temurin:17-jre
+
+# 设置工作目录
+WORKDIR /app
+
+# 从构建阶段复制JAR文件
+COPY --from=builder /build/qyuan-order/target/*.jar app.jar
+
+# 暴露端口（Spring Boot端口9003）
+EXPOSE 9003
+
+# 设置JVM参数（可根据需要调整）
+ENV JAVA_OPTS=""
+
+# 启动应用
+ENTRYPOINT ["sh", "-c", "java $JAVA_OPTS -jar app.jar"]

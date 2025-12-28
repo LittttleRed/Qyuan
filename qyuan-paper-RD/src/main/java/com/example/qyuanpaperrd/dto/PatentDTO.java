@@ -12,6 +12,11 @@ import java.time.LocalDateTime;
 @Accessors(chain = true)
 public class PatentDTO {
 
+
+    /**
+     * 专利ID
+     */
+    private Integer patentId;
     /**
      * 专利申请号
      */

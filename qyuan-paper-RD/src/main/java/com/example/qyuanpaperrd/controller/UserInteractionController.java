@@ -195,6 +195,31 @@ public class UserInteractionController {
         }
     }
 
+    @GetMapping("/otherPapers")
+    @Operation(summary = "获取他人的论文", description = "获取用户相关的论文列表")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "获取成功"),
+            @ApiResponse(responseCode = "500", description = "获取失败")
+    })
+    public ResponseEntity<Result<PageResult<com.example.qyuanpaperrd.dto.PaperDTO>>> getOtherUserPapers(
+            @Parameter(description = "用户ID", required = true)
+            @RequestParam("user_id") Long userId,
+
+            @Parameter(description = "页码")
+            @RequestParam(defaultValue = "1") @Min(1) Integer page,
+
+            @Parameter(description = "每页大小")
+            @RequestParam(defaultValue = "20") @Min(1) Integer size) {
+        try {
+            PageResult<PaperDTO> result = userPaperService.getUserPapers(userId, page, size);
+            return ResponseEntity.ok(Result.success(result));
+        } catch (Exception e) {
+            log.error("获取用户论文失败", e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Result.error("获取用户论文失败：" + e.getMessage()));
+        }
+    }
+
     @GetMapping("/getUsers")
     @Operation(summary = "获取论文所属用户", description = "获取论文所属用户")
     @ApiResponses(value = {
@@ -214,6 +239,5 @@ public class UserInteractionController {
                     .body(Result.error("获取用户论文失败：" + e.getMessage()));
         }
     }
-
 
 }

@@ -1,7 +1,9 @@
 package org.example.qyuanuser.service;
 
+import org.example.qyuancommon.Result;
 import org.example.qyuanuser.Result.*;
 import org.example.qyuanuser.DTO.favorite.*;
+import org.example.qyuanuser.entity.FavoriteFolder;
 
 public interface UserFavoriteService {
     
@@ -9,7 +11,7 @@ public interface UserFavoriteService {
 
     CommonResult deletePaper(PaperDTO PaperDTO, int user_id);
 
-    CommonResult addFolder(FolderDTO folderDTO, int user_id);
+    Result<FavoriteFolder> addFolder(FolderDTO folderDTO, int user_id);
 
     CommonResult deleteFolder(Integer folder_id);
 

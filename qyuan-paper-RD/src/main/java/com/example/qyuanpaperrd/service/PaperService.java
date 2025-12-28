@@ -100,4 +100,14 @@ public interface PaperService extends IService<Paper> {
    * 获取引用该论文的其他论文
    */
   List<CitationDTO> getPapersCitedBy(Long paperId);
+
+  /**
+   * 增加论文收藏数
+   */
+  void incrementFavoriteCount(Long paperId);
+
+  /**
+   * 增加论文阅读数
+   */
+  void incrementReadCount(Long paperId);
 }

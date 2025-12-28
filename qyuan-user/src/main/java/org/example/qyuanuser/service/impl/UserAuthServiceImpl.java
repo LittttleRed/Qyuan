@@ -7,6 +7,7 @@ import org.example.qyuanuser.util.EmailApi;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 import org.example.qyuanuser.service.UserAuthService;
+import org.example.qyuanuser.util.EmailUtils;
 import org.example.qyuanuser.util.JWT;
 import org.example.qyuanuser.mapper.UserMapper;
 import org.example.qyuanuser.entity.User;
@@ -80,6 +81,15 @@ public class UserAuthServiceImpl extends ServiceImpl<UserMapper, User> implement
         user.setUsername(registerDTO.getUsername());
         // 使用 User 实体类中的 setPassword 方法进行密码加密
         user.encodePassword(registerDTO.getPassword());
+        
+        // 检查是否为机构邮箱，如果是则设置权限级别为1
+        if (EmailUtils.isInstitutionalEmail(registerDTO.getEmail())) {
+            user.setPermissionLevel(1); // 机构用户权限级别设为1
+            user.setUseTimes(10);
+        } else {
+            user.setPermissionLevel(0); // 普通用户权限级别为0
+        }
+        
         userMapper.insert(user);
 
         registerResult.setSuccess(true);

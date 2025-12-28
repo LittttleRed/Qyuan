@@ -18,6 +18,7 @@ import com.example.qyuanpaperrd.service.HuaweiObsService;
 import com.example.qyuanpaperrd.service.MinioService;
 import jakarta.annotation.Resource;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -51,7 +52,8 @@ public class ClaimServiceImpl extends ServiceImpl<ClaimMapper, Claim> implements
   @Resource
   private final UserPaperMapper userPaperMapper;
   private final PaperService paperService;
-  
+  @Resource
+  private final KafkaTemplate<String, Object> kafkaTemplate;
   @Resource
   private MinioService minioService;
 
@@ -201,6 +203,14 @@ public class ClaimServiceImpl extends ServiceImpl<ClaimMapper, Claim> implements
       userPaper.setUserId(userId);
       userPaper.setPaperId(paperId);
       userPaperMapper.insert(userPaper);
+      Claim claim =this.getById(claim_id);
+      String tilte = claim.getPaperTitle();
+
+      Map<String,String> message = new HashMap<>();
+      message.put("title","论文认领成功");
+      message.put("content","论文："+tilte+"已认领成功");
+      message.put("userId",userId.toString());
+      kafkaTemplate.send("message-claim-topic",message);
     }
   }
 

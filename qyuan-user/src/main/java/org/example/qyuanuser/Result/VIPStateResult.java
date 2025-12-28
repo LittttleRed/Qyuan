@@ -16,7 +16,7 @@ public class VIPStateResult {
     }
 
     public void setData(int permission_level, String expire_time, int use_times){
-        vipState = this.getVipState();
+        vipState = this.getVipState()==null?new VIPState():this.getVipState();
         vipState.setPermission_level(permission_level);
         vipState.setExpire_time(expire_time);
         vipState.setUse_times(use_times);

@@ -1,6 +1,7 @@
 package org.example.qyuanuser.controller;
 
-import org.springframework.web.bind.annotation.RestController;
+import org.example.qyuanuser.entity.FavoriteFolder;
+import org.springframework.web.bind.annotation.*;
 
 import jakarta.annotation.Resource;
 
@@ -9,13 +10,6 @@ import org.example.qyuanuser.DTO.favorite.FolderDTO;
 import org.example.qyuanuser.DTO.favorite.PaperDTO;
 import org.example.qyuanuser.Result.CommonResult;
 import org.example.qyuanuser.service.UserFavoriteService;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.PatchMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestHeader;
 import org.example.qyuanuser.Result.FolderSpecInfoResult;
 import org.example.qyuanuser.Result.RecordSepcInfoResult;
 
@@ -56,15 +50,10 @@ public class FavoriteController {
     }
 
     @PostMapping("/folders")
-    public Result<Object> addFolder(@RequestBody FolderDTO folderDTO, @RequestHeader ("USER-ID") int user_id) {
+    public Result<FavoriteFolder> addFolder(@RequestBody FolderDTO folderDTO, @RequestHeader ("USER-ID") int user_id) {
         try {
-            CommonResult result = favoriteService.addFolder(folderDTO, user_id);
-            if (result.isSuccess()){
-                return Result.ok();
-            }
-            else{
-                return Result.fail(result.getMessage());
-            }
+            Result<FavoriteFolder> result = favoriteService.addFolder(folderDTO, user_id);
+            return result;
         } catch (Exception e) {
             return Result.fail(e.getMessage());
         }
@@ -100,10 +89,10 @@ public class FavoriteController {
         }
     }
 
-    @GetMapping("/folders/records")
-    public Result<Object> getFolderRecords(@RequestBody Integer folder_id, @RequestHeader ("USER-ID") int user_id) {
+    @GetMapping("/folders/records/{folder_id}")
+    public Result<Object> getFolderRecords(@PathVariable Integer folder_id, @RequestHeader ("USER-ID") int user_id) {
         try {
-            RecordSepcInfoResult result = favoriteService.getRecordSpecInfo(user_id, user_id);
+            RecordSepcInfoResult result = favoriteService.getRecordSpecInfo(folder_id, user_id);
             if (result.isSuccess()){
                 return Result.ok(result.getRecordSepcInfoes());
             }

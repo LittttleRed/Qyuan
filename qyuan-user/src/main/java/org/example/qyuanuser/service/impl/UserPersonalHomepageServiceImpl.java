@@ -117,8 +117,8 @@ public class UserPersonalHomepageServiceImpl extends ServiceImpl<UserMapper, Use
         User cachedUser = (User) redisTemplate.opsForValue().get(cacheKey);
         if (cachedUser != null) {
             VIPStateResult result = new VIPStateResult();
-            result.setData(cachedUser.getPermissionLevel().intValue(),
-                    String.valueOf(cachedUser.getExpireTime()), cachedUser.getUseTimes().intValue());
+            result.setData(cachedUser.getPermissionLevel(),
+                    String.valueOf(cachedUser.getExpireTime()), cachedUser.getUseTimes());
             result.setSuccess(true);
             return result;
         }

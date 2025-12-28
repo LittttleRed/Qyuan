@@ -1,0 +1,42 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: qyuan-es
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: qyuan-es
+  template:
+    metadata:
+      labels:
+        app: qyuan-es
+    spec:
+      containers:
+        - name: qyuan-es
+          image: 192.168.0.7:5000/qyuan-es:latest
+          ports:
+            - containerPort: 9003
+          env:
+            - name: JAVA_OPTS
+              value: "-Xmx512m -Xms256m"
+            - name: TZ
+              value: "Asia/Shanghai"
+            - name: LANG
+              value: C.UTF-8
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: qyuan-es-service
+  namespace: default
+spec:
+  selector:
+    app: qyuan-es
+  ports:
+    - port: 9003
+      targetPort: 9003
+      protocol: TCP
+  type: ClusterIP
+

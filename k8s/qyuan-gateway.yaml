@@ -1,0 +1,42 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: qyuan-gateway
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: qyuan-gateway
+  template:
+    metadata:
+      labels:
+        app: qyuan-gateway
+    spec:
+      containers:
+        - name: qyuan-gateway
+          image: 192.168.0.7:5000/qyuan-gateway:latest
+          ports:
+            - containerPort: 9003
+          env:
+            - name: JAVA_OPTS
+              value: "-Xmx512m -Xms256m"
+            - name: TZ
+              value: "Asia/Shanghai"
+            - name: LANG
+              value: C.UTF-8
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: qyuan-gateway-service
+  namespace: default
+spec:
+  selector:
+    app: qyuan-gateway
+  ports:
+    - port: 9003
+      targetPort: 9003
+      nodePort: 31001
+      protocol: TCP
+  type: NodePort
+

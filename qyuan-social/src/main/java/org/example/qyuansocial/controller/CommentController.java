@@ -1,5 +1,6 @@
 package org.example.qyuansocial.controller;
 
+import com.alibaba.fastjson2.JSONObject;
 import org.example.qyuancommon.Result;
 import org.example.qyuansocial.common.PageResponse;
 import org.example.qyuansocial.dto.CreateCommentResponse;
@@ -19,10 +20,18 @@ public class CommentController {
     private CommentService commentService;
 
     @PostMapping("/createComment")
-    public Result<CreateCommentResponse> createComment(@RequestBody Comment comment) {
+    public Result<CreateCommentResponse> createComment(@RequestBody JSONObject data) {
+        Comment comment = new Comment();
+        comment.setUserId(data.getLong("user_id"));
+        comment.setUserName(data.getString("user_name"));
+        comment.setUserAvatar(data.getString("user_avatar"));
+        comment.setAchievementId(data.getLong("achievement_id"));
+        comment.setAchievementType(data.getString("achievement_type"));
+        comment.setParentId(data.getLong("parent_comment_id"));
+        comment.setContent(data.getString("content"));
         Long commentId = commentService.createComment(comment);
-        CreateCommentResponse data = new CreateCommentResponse(commentId);
-        return Result.ok(data, "评论成功");
+        CreateCommentResponse result = new CreateCommentResponse(commentId);
+        return Result.ok(result, "评论成功");
     }
 
     @DeleteMapping("/deleteComment/{commentId}")

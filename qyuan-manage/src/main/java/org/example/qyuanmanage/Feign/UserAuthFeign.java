@@ -7,10 +7,10 @@ import org.springframework.web.bind.annotation.*;
 import java.time.LocalDateTime;
 
 
-@FeignClient(name="qyuan-user",path = "/user/homepage")
+@FeignClient(name="qyuan-user",path = "/user/personalHomepage")
 public interface UserAuthFeign {
 
 
-    @PostMapping("/vip")
+    @GetMapping("/vip")
     public Result<Object> authRoot(@RequestHeader("USER-ID") Integer user_id);
 }

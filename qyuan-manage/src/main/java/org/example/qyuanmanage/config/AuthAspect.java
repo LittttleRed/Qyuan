@@ -3,7 +3,6 @@ package org.example.qyuanmanage.config;
 import com.alibaba.fastjson2.JSONObject;
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
-import netscape.javascript.JSObject;
 import org.aspectj.lang.JoinPoint;
 import org.aspectj.lang.annotation.Aspect;
 import org.aspectj.lang.annotation.Before;
@@ -11,7 +10,10 @@ import org.aspectj.lang.annotation.Pointcut;
 import org.aspectj.lang.reflect.MethodSignature;
 import org.example.qyuancommon.Result;
 import org.example.qyuanmanage.Feign.UserAuthFeign;
+import org.example.qyuanmanage.entity.VIPState;
 import org.springframework.stereotype.Component;
+
+import java.util.LinkedHashMap;
 
 @Aspect
 @Component
@@ -21,7 +23,7 @@ public class AuthAspect {
     @Resource
     UserAuthFeign userAuthFeign;
 
-    @Pointcut("execution(* org.example.qyuanmanage.controller..*(..))")
+    @Pointcut("execution(* org.example.qyuanmanage.controller..*(..)) && !execution(* org.example.qyuanmanage.controller.ReportController.createReport(..))")
     public void RootCut(){}
 
     @Before("RootCut()")
@@ -39,12 +41,13 @@ public class AuthAspect {
             if ("user_id".equals(paramNames[i]) || "userId".equals(paramNames[i])) {
                 Integer userId =(Integer) args[i];
                 log.info("user_id = "+ userId);
-//                Result result=userAuthFeign.authRoot(userId);
-//                JSONObject jsonObject=(JSONObject)result.getData();
-//                Integer permission_level=jsonObject.getInteger("permission_level");
-//                if(permission_level!=3){
-//                    throw new RuntimeException();
-//                }
+
+                Result<Object> result=userAuthFeign.authRoot(userId);
+                LinkedHashMap<String,Object> jsonObject= (LinkedHashMap<String, Object>) result.getData();
+                Integer permission_level= (Integer) jsonObject.get("permission_level");
+                if(permission_level!=3){
+                    throw new RuntimeException();
+                }
                 break;
             }
         }

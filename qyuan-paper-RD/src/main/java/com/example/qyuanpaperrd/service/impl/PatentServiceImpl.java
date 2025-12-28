@@ -26,54 +26,12 @@ public class PatentServiceImpl implements PatentService {
     private final PatentMapper patentMapper;
 
     @Override
-    @Cacheable(value = "patent", key = "'number:' + #patentNumber + ':user:' + #userId", unless = "#result == null")
-    public PatentDTO getPatentByNumber(String patentNumber, Long userId) {
-        // 查询专利信息
-        Patent patent = patentMapper.selectById(patentNumber);
+    public PatentDTO getPatentById(Integer patentId) {
+        Patent patent = patentMapper.selectById(patentId);
         if (patent == null) {
             return null;
         }
-
-        // 转换为DTO
-        PatentDTO patentDTO = new PatentDTO();
-        BeanUtils.copyProperties(patent, patentDTO);
-
-        return patentDTO;
-    }
-
-    @Override
-    public PageResult<PatentDTO> searchPatents(String keyword, String inventor, String assignee, String country, Integer pageNum, Integer pageSize) {
-        List<Patent> patents;
-
-        // 优先使用具体的搜索条件
-        if (inventor != null && !inventor.trim().isEmpty()) {
-            patents = patentMapper.searchByInventor(inventor.trim());
-        } else if (assignee != null && !assignee.trim().isEmpty()) {
-            patents = patentMapper.searchByAssignee(assignee.trim());
-        } else if (country != null && !country.trim().isEmpty()) {
-            patents = patentMapper.searchByCountry(country.trim());
-        } else if (keyword != null && !keyword.trim().isEmpty()) {
-            patents = patentMapper.searchPatents(keyword.trim());
-        } else {
-            QueryWrapper<Patent> queryWrapper = new QueryWrapper<>();
-            patents = patentMapper.selectList(queryWrapper);
-        }
-
-        // 手动分页
-        int total = patents.size();
-        int startIndex = (pageNum - 1) * pageSize;
-        int endIndex = Math.min(startIndex + pageSize, total);
-
-        if (startIndex >= total) {
-            return PageResult.of(java.util.Collections.emptyList(), (long)total, (long)pageNum, (long)pageSize);
-        }
-
-        List<Patent> pageData = patents.subList(startIndex, endIndex);
-        List<PatentDTO> patentDTOs = pageData.stream()
-                .map(this::convertToDTO)
-                .collect(Collectors.toList());
-
-        return PageResult.of(patentDTOs, (long)total, (long)pageNum, (long)pageSize);
+        return convertToDTO(patent);
     }
 
     @Override

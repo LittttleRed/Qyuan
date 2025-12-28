@@ -10,4 +10,6 @@ public interface UserSecurityService {
     CommonResult setNewEmail(SetNewEmailDTO setNewEmailDTO, int user_id);
 
     void payForVIP(Integer userId, LocalDateTime expireTime, String orderKey);
+    
+    CommonResult decreaseUseTimes(int user_id);
 }

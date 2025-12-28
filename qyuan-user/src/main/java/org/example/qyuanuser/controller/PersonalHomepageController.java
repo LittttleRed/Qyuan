@@ -2,18 +2,12 @@ package org.example.qyuanuser.controller;
 
 import com.alibaba.fastjson2.JSONObject;
 import org.example.qyuanuser.service.UserPersonalHomepageService;
-import org.springframework.web.bind.annotation.PatchMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import org.example.qyuanuser.Result.VIPStateResult;
 import jakarta.annotation.Resource;
-import org.springframework.web.bind.annotation.GetMapping;
 import org.example.qyuancommon.Result;
 import org.example.qyuanuser.DTO.personalHomepage.UpdatePersonalInfoDTO;
 import org.example.qyuanuser.Result.CommonResult;
-import org.springframework.web.bind.annotation.RequestHeader;
 import org.example.qyuanuser.Result.PersonalInfoResult;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -54,10 +48,24 @@ public class PersonalHomepageController {
             return Result.fail(e.getMessage());
         }
     }
-    
+
+    @GetMapping("/otherInfo")
+    public Result<Object> getOtherInfo(@RequestParam("user_id") int user_id){
+        try {
+            PersonalInfoResult result = userPersonalHomepageService.getPersonalInfo(user_id);
+            if (result.isSuccess()) {
+                return Result.ok(result.getPersonalInfo());
+            } else {
+                return Result.fail(result.getMessage());
+            }
+        } catch (Exception e) {
+            return Result.fail(e.getMessage());
+        }
+    }
+
 
     @GetMapping("/vip")
-    public Result<Object> getVipState(@RequestHeader ("USER-ID") int user_id) {
+    public Result<VIPStateResult.VIPState> getVipState(@RequestHeader ("USER-ID") Integer user_id) {
         try {
             VIPStateResult result = userPersonalHomepageService.getVipState(user_id);
             if (result.isSuccess()) {

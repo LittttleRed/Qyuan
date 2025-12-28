@@ -37,6 +37,14 @@ public interface FollowService {
     boolean cancelFollow(Long followId);
 
     /**
+     * 根据关注者ID和被关注者ID取消关注
+     * @param followerId 关注者ID
+     * @param followedId 被关注者ID
+     * @return 是否成功
+     */
+    boolean cancelFollowByUserIds(Long followerId, Long followedId);
+
+    /**
      * 查询两个用户之间的关注关系
      * @param userId 当前用户ID
      * @param targetUserId 目标用户ID

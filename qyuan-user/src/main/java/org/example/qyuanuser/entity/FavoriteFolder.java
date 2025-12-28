@@ -6,7 +6,7 @@ import lombok.NoArgsConstructor;
 
 @Data
 @NoArgsConstructor
-@TableName("favoriteFolder")
+@TableName("favorite_folder")
 public class FavoriteFolder {
     
     @TableId(type = IdType.AUTO)

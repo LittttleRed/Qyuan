@@ -54,4 +54,18 @@ public class SecurityController {
         }
         userSecurityService.payForVIP(user_id, expire_time, order_key);
     }
+
+    @PostMapping("/use-times/decrease")
+    public Result<Object> decreaseUseTimes(@RequestHeader("USER-ID") int user_id) {
+        try {
+            CommonResult result = userSecurityService.decreaseUseTimes(user_id);
+            if (result.isSuccess()) {
+                return Result.ok();
+            } else {
+                return Result.fail(result.getMessage());
+            }
+        } catch (Exception e) {
+            return Result.fail(e.getMessage());
+        }
+    }
 }

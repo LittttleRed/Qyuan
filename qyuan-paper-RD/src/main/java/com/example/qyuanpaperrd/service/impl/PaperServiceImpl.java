@@ -526,4 +526,24 @@ public class PaperServiceImpl extends ServiceImpl<PaperMapper, Paper> implements
     
     return ris.toString();
   }
+  
+  @Override
+  public void incrementFavoriteCount(Long paperId) {
+    Paper paper = getById(paperId);
+    if (paper != null) {
+      paper.setFavoriteCount(paper.getFavoriteCount() != null ? paper.getFavoriteCount() + 1 : 1);
+      updateById(paper);
+    }
+    log.info("论文收藏数增加，论文ID：{}", paperId);
+  }
+  
+  @Override
+  public void incrementReadCount(Long paperId) {
+    Paper paper = getById(paperId);
+    if (paper != null) {
+      paper.setReadCount(paper.getReadCount() != null ? paper.getReadCount() + 1 : 1);
+      updateById(paper);
+    }
+    log.info("论文阅读数增加，论文ID：{}", paperId);
+  }
 }

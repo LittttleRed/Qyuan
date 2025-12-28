@@ -18,10 +18,13 @@ import java.time.LocalDateTime;
 @TableName("patent")
 public class Patent {
 
+    @TableId(value = "patent_id", type = IdType.AUTO)
+    private Integer patentId;
+
     /**
      * 专利申请号
      */
-    @TableId(value = "patent_number", type = IdType.INPUT)
+    @TableField("patent_number")
     private String patentNumber;
 
     /**

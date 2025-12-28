@@ -1,0 +1,41 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: qyuan-read-notes
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: qyuan-read-notes
+  template:
+    metadata:
+      labels:
+        app: qyuan-read-notes
+    spec:
+      containers:
+        - name: qyuan-read-notes
+          image: 192.168.0.7:5000/qyuan-read-notes:latest
+          ports:
+            - containerPort: 9003
+          env:
+            - name: JAVA_OPTS
+              value: "-Xmx512m -Xms256m"
+            - name: TZ
+              value: "Asia/Shanghai"
+            - name: LANG
+              value: C.UTF-8
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: qyuan-read-notes-service
+  namespace: default
+spec:
+  selector:
+    app: qyuan-read-notes
+  ports:
+    - port: 9003
+      targetPort: 9003
+      protocol: TCP
+  type: ClusterIP
+

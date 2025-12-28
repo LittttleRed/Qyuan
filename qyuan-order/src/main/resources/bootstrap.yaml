@@ -2,7 +2,7 @@ spring:
   profiles:
     active: dev
 server:
-  port: 9004
+  port: 9003
 
 ---
 # development environment
@@ -10,20 +10,20 @@ spring:
   config:
     activate:
       on-profile: dev
-    import: file:.env.dev.properties
   application:
     name: qyuan-order
   cloud:
     nacos:
       discovery:
-        server-addr: ${NACOS_IP}:${NACOS_PORT}
-        namespace: ${NACOS_NAMESPACE}
+        ip: qyuan-order-service.default.svc.cluster.local
+        server-addr: nacos.default.svc.cluster.local:8848
+        namespace: c0d42ad8-9d65-4b0a-aa97-1af2c0d0a3f8
         group: Qyuan
         username: nacos
         password: QianYuanWanMa_18
       config:
-        server-addr: ${NACOS_IP}:${NACOS_PORT}
-        namespace: ${NACOS_NAMESPACE}
+        server-addr: nacos.default.svc.cluster.local:8848
+        namespace: c0d42ad8-9d65-4b0a-aa97-1af2c0d0a3f8
         file-extension: yaml
         group: Qyuan
         timeout: 10000

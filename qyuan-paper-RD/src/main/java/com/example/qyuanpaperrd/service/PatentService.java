@@ -12,24 +12,11 @@ import java.util.List;
 public interface PatentService {
 
     /**
-     * 根据专利申请号获取专利详情
-     * @param patentNumber 专利申请号
-     * @param userId 用户ID（可选，用于检查认领状态）
+     * 根据专利ID获取专利详情
+     * @param patentId 专利ID
      * @return 专利详情
      */
-    PatentDTO getPatentByNumber(String patentNumber, Long userId);
-
-    /**
-     * 搜索专利
-     * @param keyword 关键词
-     * @param inventor 发明人
-     * @param assignee 专利权人
-     * @param country 国家
-     * @param pageNum 页码
-     * @param pageSize 页大小
-     * @return 分页结果
-     */
-    PageResult<PatentDTO> searchPatents(String keyword, String inventor, String assignee, String country, Integer pageNum, Integer pageSize);
+    PatentDTO getPatentById(Integer patentId);
 
     /**
      * 获取热门专利

@@ -7,6 +7,7 @@ import org.example.qyuanuser.service.UserSecurityService;
 import org.example.qyuanuser.DTO.security.*;
 import org.example.qyuanuser.Result.CommonResult;
 import org.example.qyuanuser.entity.User;
+import org.example.qyuanuser.util.EmailUtils;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.beans.factory.annotation.Qualifier;
 
@@ -112,6 +113,13 @@ public class    UserSecurityServiceImpl extends ServiceImpl<UserMapper, User> im
         redisTemplate.delete(captchaKey);
         
         user.setEmail(setNewEmailDTO.getEmail());
+        
+        // 检查新邮箱是否为机构邮箱，如果是则设置权限级别为1
+        if (EmailUtils.isInstitutionalEmail(setNewEmailDTO.getEmail()) && user.getPermissionLevel()==0) {
+            user.setPermissionLevel(1); // 机构用户权限级别设为1
+            user.setUseTimes(user.getUseTimes()+5);
+        }
+        
         userMapper.updateById(user);
         result.setSuccess(true);
         return result;
@@ -121,7 +129,39 @@ public class    UserSecurityServiceImpl extends ServiceImpl<UserMapper, User> im
     public void payForVIP(Integer userId, LocalDateTime expireTime, String orderKey) {
          User user = userMapper.selectById(userId);
          user.setExpireTime(expireTime);
+         // VIP用户权限级别为2，高于机构用户（级别1）和普通用户（级别0）
          user.setPermissionLevel(2);
+         redisTemplate.delete(USER_INFO_CACHE_PREFIX + userId);
          userMapper.updateById(user);
+    }
+
+    @Override
+    public CommonResult decreaseUseTimes(int user_id) {
+        CommonResult result = new CommonResult();
+        User user = userMapper.selectById(user_id);
+        if (user == null) {
+            result.setMessage("用户不存在");
+            result.setSuccess(false);
+            return result;
+        }
+
+        // 检查useTimes是否大于0，避免负数
+        if (user.getUseTimes() <= 0) {
+            result.setMessage("使用次数已为0，无法继续减少");
+            result.setSuccess(false);
+            return result;
+        }
+
+        // 使用MyBatis-Plus的update方法，只更新use_times字段
+        user.setUseTimes(user.getUseTimes() - 1);
+        userMapper.updateById(user);
+
+        // 清除缓存以确保下次获取时是最新的数据
+        String userInfoKey = USER_INFO_CACHE_PREFIX + user_id;
+        redisTemplate.delete(userInfoKey);
+
+        result.setSuccess(true);
+        result.setMessage("使用次数减少成功");
+        return result;
     }
 }

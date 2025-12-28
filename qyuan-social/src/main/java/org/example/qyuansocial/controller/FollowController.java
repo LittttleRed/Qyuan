@@ -52,6 +52,19 @@ public class FollowController {
     }
 
     /**
+     * 根据关注者ID和被关注者ID取消关注
+     */
+    @PostMapping("/deleteFollowByUserIds")
+    public Result<Map<String, Object>> cancelFollowByUserIds(@RequestParam("followerId") Long followerId,
+                                                             @RequestParam("followedId") Long followedId) {
+        // 取消关注功能：幂等操作，即使不存在也返回成功（像微博/抖音一样）
+        followService.cancelFollowByUserIds(followerId, followedId);
+        // 按照接口文档：code 为 0 表示成功，msg 为提示信息，data 为对象（这里返回一个空对象 {}）
+        Map<String, Object> data = new HashMap<>();
+        return Result.ok(data, "取消关注成功");
+    }
+
+    /**
      * 查询当前用户与目标用户之间的关注关系
      */
     @GetMapping("/getFollowRelation")

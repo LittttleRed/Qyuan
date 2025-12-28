@@ -103,12 +103,13 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper,Order>implements O
         Integer buyDay=order.getBuyDay();
         LocalDateTime expire_time=LocalDateTime.now().plusDays(buyDay);
         //TODO:实现用户侧接口
-//        userSecurityFeign.payForVIP(user_id,expire_time, orderKey);
+        userSecurityFeign.payForVIP(user_id,expire_time, orderKey);
         // 发送Kafka消息
 
         Map<String, String> message = new HashMap<>();
         message.put("title", "支付成功");
-        message.put("content", "你的会员已生效");
+        String content = String.format("尊敬的会员,您好! 您购买的时长为%s天的会员已生效，会员有效期至%s", buyDay, expire_time);
+        message.put("content", content);
         message.put("userId", String.valueOf(user_id));
         kafkaTemplate.send("message-buy-vip-topic", message);
 

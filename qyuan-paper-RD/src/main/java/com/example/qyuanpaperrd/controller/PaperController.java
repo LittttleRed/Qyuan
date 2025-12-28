@@ -312,4 +312,56 @@ public class PaperController {
                     .body(Result.error("批量导入失败：" + e.getMessage()));
         }
     }
+    
+    @PostMapping("/{paperId}/favorite")
+    @Operation(summary = "增加论文收藏数", description = "将指定论文的收藏数+1")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "收藏数增加成功"),
+        @ApiResponse(responseCode = "404", description = "论文不存在"),
+        @ApiResponse(responseCode = "500", description = "收藏数增加失败")
+    })
+    public ResponseEntity<Result<String>> incrementFavoriteCount(
+            @Parameter(description = "论文ID", required = true)
+            @PathVariable @NotNull Long paperId) {
+        try {
+            PaperDTO paper = paperService.getPaperById(paperId);
+            if (paper == null) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                        .body(Result.notFound("论文不存在"));
+            }
+            
+            paperService.incrementFavoriteCount(paperId);
+            return ResponseEntity.ok(Result.success("收藏数增加成功"));
+        } catch (Exception e) {
+            log.error("增加论文收藏数失败", e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Result.error("增加收藏数失败：" + e.getMessage()));
+        }
+    }
+    
+    @PostMapping("/{paperId}/view")
+    @Operation(summary = "增加论文阅读数", description = "将指定论文的阅读数+1")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "阅读数增加成功"),
+        @ApiResponse(responseCode = "404", description = "论文不存在"),
+        @ApiResponse(responseCode = "500", description = "阅读数增加失败")
+    })
+    public ResponseEntity<Result<String>> incrementReadCount(
+            @Parameter(description = "论文ID", required = true)
+            @PathVariable @NotNull Long paperId) {
+        try {
+            PaperDTO paper = paperService.getPaperById(paperId);
+            if (paper == null) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                        .body(Result.notFound("论文不存在"));
+            }
+            
+            paperService.incrementReadCount(paperId);
+            return ResponseEntity.ok(Result.success("阅读数增加成功"));
+        } catch (Exception e) {
+            log.error("增加论文阅读数失败", e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Result.error("增加阅读数失败：" + e.getMessage()));
+        }
+    }
 }

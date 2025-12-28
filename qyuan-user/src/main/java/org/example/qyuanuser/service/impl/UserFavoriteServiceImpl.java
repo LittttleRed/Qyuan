@@ -3,6 +3,7 @@ package org.example.qyuanuser.service.impl;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import jakarta.annotation.Resource;
+import org.example.qyuancommon.Result;
 import org.springframework.stereotype.Service;
 import org.example.qyuanuser.service.UserFavoriteService;
 import org.example.qyuanuser.mapper.FavoriteRecordMapper;
@@ -37,8 +38,7 @@ public class UserFavoriteServiceImpl extends ServiceImpl<FavoriteRecordMapper, F
         FavoriteRecord favoriteRecord = new FavoriteRecord();
         favoriteRecord.setFolderId(PaperDTO.getFolder_id());
         favoriteRecord.setPaperId(PaperDTO.getPaper_id());
-        //TODO:这里需要获取paper的title(我觉得这里不应该把title存到favoriteRecord中，因为这会导致不一致问题。)
-        favoriteRecord.setPaperTitle("temp_title");
+        favoriteRecord.setPaperTitle(PaperDTO.getPaper_title());
         favoriteRecord.setUserId(user_id);
         favoriteRecordMapper.insert(favoriteRecord);
 
@@ -86,11 +86,11 @@ public class UserFavoriteServiceImpl extends ServiceImpl<FavoriteRecordMapper, F
     }
 
     @Override
-    public CommonResult addFolder(FolderDTO folderDTO, int user_id){ 
-        CommonResult result = new CommonResult();
+    public Result<FavoriteFolder> addFolder(FolderDTO folderDTO, int user_id){
+        Result<FavoriteFolder> result = new Result();
         if(!folderDTO.isFull()){
-            result.setMessage("缺少参数");
-            result.setSuccess(false);
+            result.setMsg("缺少参数");
+            result.setCode(500);
             return result;
         }
 
@@ -100,8 +100,7 @@ public class UserFavoriteServiceImpl extends ServiceImpl<FavoriteRecordMapper, F
         favoriteFolder.setIsPublic(folderDTO.getIs_public());
         favoriteFolder.setPaperCount(0);
         favoriteFolderMapper.insert(favoriteFolder);
-        result.setSuccess(true);
-        return result;
+        return Result.ok(favoriteFolder);
     }
 
     @Override
@@ -120,9 +119,8 @@ public class UserFavoriteServiceImpl extends ServiceImpl<FavoriteRecordMapper, F
     @Override
     public FolderSpecInfoResult getFolderSpecInfo(int user_id){ 
         // 创建查询条件，根据user_id查询该用户的所有文件夹
-        QueryWrapper<FavoriteFolder> wrapper = new QueryWrapper<>();
-        wrapper.eq("user_id", user_id);
-        List<FavoriteFolder> folderList = favoriteFolderMapper.selectList(wrapper);
+
+        List<FavoriteFolder> folderList = favoriteFolderMapper.selectByUserId(user_id);
         
         // 将FavoriteFolder实体列表转换为FolderSpecInfo对象列表
         ArrayList<FolderSpecInfoResult.FolderSpecInfo> folderSpecInfoes = new ArrayList<>();
@@ -163,7 +161,7 @@ public class UserFavoriteServiceImpl extends ServiceImpl<FavoriteRecordMapper, F
             info.setFolder_id(record.getFolderId());
             info.setPaper_id(record.getPaperId());
             //TODO : 获取paper_title
-            info.setPaper_title("");
+            info.setPaper_title(record.getPaperTitle());
             info.setUser_id(record.getUserId());
             recordSepcInfoes.add(info);
         }
